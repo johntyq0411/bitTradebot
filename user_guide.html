@@ -283,6 +283,7 @@
   <h2>Overview</h2>
   <a href="#what-is-it">What Is This Bot?</a>
   <a href="#architecture">Architecture</a>
+  <a href="#multifactor">Macro & Micro Structure</a>
   <a href="#files">Project Files</a>
 
   <h2>Strategy</h2>
@@ -308,6 +309,7 @@
   <a href="#troubleshoot">Troubleshooting</a>
 
   <h2>Reference</h2>
+  <a href="#git-branches">Git Branching Strategy</a>
   <a href="#config-ref">Config Reference</a>
   <a href="#api-ref">API Endpoints</a>
   <a href="#docker">Docker Deployment</a>
@@ -372,6 +374,40 @@ graph TD
 
 <hr>
 
+<section id="multifactor">
+<h2>Macro & Micro Structure (Multi-Factor Analysis)</h2>
+<p>To avoid false positives from basic technical signals, the bot filters entries through multiple dimensional factors:</p>
+
+<div class="mermaid">
+graph LR
+    subgraph Macro [1. Macro Filter]
+    M1[1-Day Timeframe] --> M2{EMA20 > EMA50?}
+    end
+
+    subgraph Technical [2. Technical Setup]
+    T1[1-Hour Timeframe] --> T2{EMA Crossover?}
+    T1 --> T3{RSI 45 - 60?}
+    end
+
+    subgraph Micro [3. Micro Trigger]
+    H1[Volume Activity] --> H2{Volume > 1.5x MA?}
+    end
+
+    Macro --> Entry
+    Technical --> Entry
+    Micro --> Entry
+    Entry{All Conditions Met?} -->|Yes| Buy[🟢 Enter Trade]
+</div>
+
+<ul>
+  <li><strong>Macro (Broader Trend):</strong> Checks daily (1d) trends to prevent buying in a macroeconomic downtrend (bear market filter).</li>
+  <li><strong>Technical (Momentum & Volatility):</strong> EMA crossover defines the primary entry zone, while RSI filters entries to a healthy range to prevent buying overextended runs.</li>
+  <li><strong>Micro (Volume Breakout):</strong> Requires a volume spike of 1.5x higher than the 24-hour average to confirm institutional support at entry.</li>
+</ul>
+</section>
+
+<hr>
+
 <section id="files">
 <h2>Project Files</h2>
 
@@ -405,9 +441,11 @@ graph TD
 <h3>The Three Indicators</h3>
 <table>
   <tr><th>Indicator</th><th>Period</th><th>Purpose</th><th>Colour in FreqUI</th></tr>
-  <tr><td><strong>EMA 20</strong></td><td>20 candles (20h)</td><td>Fast-moving average — tracks recent price trend</td><td style="color:#00bfff">■ Cyan</td></tr>
-  <tr><td><strong>EMA 50</strong></td><td>50 candles (50h)</td><td>Slow-moving average — tracks broader trend</td><td style="color:#ff6b35">■ Orange</td></tr>
-  <tr><td><strong>RSI 14</strong></td><td>14 candles (14h)</td><td>Momentum oscillator — 0–100 scale, filters overextended entries</td><td style="color:#a29bfe">■ Purple</td></tr>
+  <tr><td><strong>1d EMA 20 (Macro)</strong></td><td>20 Days (480h)</td><td>Macro trend tracker — determines broad market regime</td><td style="color:#ffd166">■ Yellow</td></tr>
+  <tr><td><strong>1h EMA 20 (Technical)</strong></td><td>20 hours (20h)</td><td>Fast-moving average — tracks recent price trend</td><td style="color:#00bfff">■ Cyan</td></tr>
+  <tr><td><strong>1h EMA 50 (Technical)</strong></td><td>50 hours (50h)</td><td>Slow-moving average — tracks broader trend</td><td style="color:#ff6b35">■ Orange</td></tr>
+  <tr><td><strong>1h RSI 14 (Technical)</strong></td><td>14 hours (14h)</td><td>Momentum oscillator — 0–100 scale, filters overextended entries</td><td style="color:#a29bfe">■ Purple</td></tr>
+  <tr><td><strong>1h Volume MA (Micro)</strong></td><td>24 hours (24h)</td><td>Compares current volume to check institutional activity</td><td style="color:#3ddc84">■ Green</td></tr>
 </table>
 
 <h4>What is an EMA?</h4>
@@ -427,19 +465,21 @@ graph TD
     <h4>▲ BUY (Enter Long)</h4>
     <p style="font-size:12px;color:var(--muted);margin-bottom:8px">ALL conditions must be true on the same candle:</p>
     <ul>
-      <li>EMA 20 just crossed <strong>above</strong> EMA 50</li>
-      <li>RSI is between <strong>40 and 65</strong></li>
-      <li>Volume &gt; 0 (active market)</li>
+      <li><strong>Macro:</strong> Daily EMA 20 is above Daily EMA 50</li>
+      <li><strong>Technical:</strong> 1h EMA 20 crossed <strong>above</strong> 1h EMA 50</li>
+      <li><strong>Technical:</strong> 1h RSI is between <strong>45 and 60</strong> (Tightened)</li>
+      <li><strong>Micro:</strong> Volume is <strong>1.5x</strong> higher than the previous 24h average</li>
     </ul>
   </div>
   <div class="signal-card sell">
     <h4>▼ SELL (Exit Long)</h4>
     <p style="font-size:12px;color:var(--muted);margin-bottom:8px">ANY condition triggers exit:</p>
     <ul>
-      <li>EMA 20 just crossed <strong>below</strong> EMA 50, OR</li>
-      <li>RSI exceeds <strong>75</strong> (overbought), OR</li>
-      <li>ROI target hit, OR</li>
-      <li>Stop-loss at −4% triggered</li>
+      <li>1h EMA 20 crosses <strong>below</strong> 1h EMA 50, OR</li>
+      <li>1h RSI exceeds <strong>75</strong> (overbought), OR</li>
+      <li>ROI target hit (aggressively taking partial gains), OR</li>
+      <li>Trailing stop hit (locks in profit after 2.5% run), OR</li>
+      <li>Hard Stop-loss at −5% triggered</li>
     </ul>
   </div>
 </div>
@@ -450,23 +490,29 @@ graph TD
 flowchart TD
     A[New 1h Candle Closes] --> B{In a Trade?}
 
-    B -->|No| C{EMA20 just crossed<br/>above EMA50?}
+    B -->|No| C{Macro 1d EMA20 > EMA50?}
     C -->|No| Z1[Wait for next candle]
-    C -->|Yes| D{RSI between<br/>40 and 65?}
+    C -->|Yes| D{1h EMA20 crossed above EMA50?}
     D -->|No| Z1
-    D -->|Yes| E{Volume > 0?}
+    D -->|Yes| E{1h RSI between 45 and 60?}
     E -->|No| Z1
-    E -->|Yes| F[🟢 ENTER LONG<br/>Buy BTC/USDT at market close]
+    E -->|Yes| F{1h Volume > 1.5x MA?}
+    F -->|No| Z1
+    F -->|Yes| G[🟢 ENTER LONG<br/>Buy BTC/USDT at market close]
 
-    B -->|Yes| G{Check ROI Table<br/>for time held}
-    G -->|Profit ≥ ROI threshold| H[💰 EXIT: ROI Hit]
-    G -->|Not yet| I{Price dropped<br/>≥ 4% from entry?}
-    I -->|Yes| J[🛑 EXIT: Stop-Loss]
-    I -->|No| K{EMA20 crossed<br/>below EMA50?}
-    K -->|Yes| L[📉 EXIT: Signal]
-    K -->|No| M{RSI > 75?}
-    M -->|Yes| N[📈 EXIT: RSI Overbought]
-    M -->|No| Z2[Hold position]
+    B -->|Yes| H{Trailing Stop offset reached?}
+    H -->|Yes| I{Price dropped from peak by stop ratio?}
+    I -->|Yes| J[🛑 EXIT: Trailing Stop]
+    I -->|No| K{Check ROI Table?}
+    H -->|No| K
+    K -->|Profit >= ROI threshold| L[💰 EXIT: ROI Hit]
+    K -->|Not yet| M{Price dropped >= 5% from entry?}
+    M -->|Yes| N[🛑 EXIT: Hard Stop-Loss]
+    M -->|No| O{1h EMA20 crossed below EMA50?}
+    O -->|Yes| P[📉 EXIT: Signal]
+    O -->|No| Q{RSI > 75?}
+    Q -->|Yes| R[📈 EXIT: RSI Overbought]
+    Q -->|No| Z2[Hold position]
 </div>
 </section>
 
@@ -708,26 +754,21 @@ flowchart LR
 <h2>Your Backtest Results</h2>
 
 <div class="metric-grid">
-  <div class="metric"><div class="val">173</div><div class="lbl">Total Trades</div></div>
-  <div class="metric"><div class="val pos">60.7%</div><div class="lbl">Win Rate</div></div>
-  <div class="metric"><div class="val neg">−24.0%</div><div class="lbl">Total Return</div></div>
-  <div class="metric"><div class="val neg">40.7%</div><div class="lbl">Max Drawdown</div></div>
-  <div class="metric"><div class="val">0.89×</div><div class="lbl">Profit Factor</div></div>
-  <div class="metric"><div class="val">10.0h</div><div class="lbl">Avg Trade Duration</div></div>
+  <div class="metric"><div class="val">31</div><div class="lbl">Total Trades</div></div>
+  <div class="metric"><div class="val pos">61.3%</div><div class="lbl">Win Rate</div></div>
+  <div class="metric"><div class="val neg">−13.0%</div><div class="lbl">Total Return</div></div>
+  <div class="metric"><div class="val neg">20.9%</div><div class="lbl">Max Drawdown</div></div>
+  <div class="metric"><div class="val">0.81×</div><div class="lbl">Profit Factor</div></div>
+  <div class="metric"><div class="val">18.5h</div><div class="lbl">Avg Trade Duration</div></div>
 </div>
 
 <table>
   <tr><th>Metric</th><th>Value</th></tr>
   <tr><td>Period</td><td>Feb 25 → Aug 22, 2026 (180 days)</td></tr>
   <tr><td>Starting balance</td><td>1,000.00 USDT</td></tr>
-  <tr><td>Final balance</td><td>759.66 USDT</td></tr>
-  <tr><td>Avg win size</td><td>+1.93%</td></tr>
-  <tr><td>Avg loss size</td><td>−3.29%</td></tr>
-  <tr><td>Best trade</td><td>+5.20%</td></tr>
-  <tr><td>Worst trade</td><td>−4.20%</td></tr>
-  <tr><td>ROI exits</td><td>104 (60.1%)</td></tr>
-  <tr><td>Stop-loss exits</td><td>39 (22.5%)</td></tr>
-  <tr><td>Signal exits</td><td>30 (17.3%)</td></tr>
+  <tr><td>Final balance</td><td>869.70 USDT</td></tr>
+  <tr><td>Total Trades</td><td>31 (Reduced from 173 by Macro/Micro filters)</td></tr>
+  <tr><td>Max Drawdown</td><td>20.9% (Halved from 40.7% baseline)</td></tr>
 </table>
 </section>
 
@@ -1072,6 +1113,39 @@ docker compose down</code></pre>
   <tr><td>Auto-restart</td><td>Manual</td><td>✓ <code>restart: unless-stopped</code></td></tr>
   <tr><td>Memory limits</td><td>Uncapped</td><td>✓ 512MB limit in compose file</td></tr>
   <tr><td>Recommended for</td><td>Development / testing</td><td>Long-running deployment</td></tr>
+</table>
+</section>
+
+<section id="git-branches">
+<h2>Git Branching Strategy</h2>
+<p>To safely separate dry-runs/testing environments from real funds deployment, the repository is split into two distinct tracks:</p>
+
+<div class="mermaid">
+gitGraph
+   commit id: "Initial Multi-Factor setup"
+   branch staging
+   checkout staging
+   commit id: "Set dry_run: true"
+   commit id: "Active Paper trading"
+   checkout main
+   branch prod
+   checkout prod
+   commit id: "Set dry_run: false"
+   commit id: "Real deployment later"
+</div>
+
+<table>
+  <tr><th>Branch</th><th>Role</th><th>Key Config Parameters</th></tr>
+  <tr>
+    <td><strong>staging</strong></td>
+    <td>Paper Trading (Dry-run mode)</td>
+    <td><code>"dry_run": true</code>, blank exchange credentials. Runs locally or in container safely.</td>
+  </tr>
+  <tr>
+    <td><strong>prod</strong></td>
+    <td>Production (Real funds trading)</td>
+    <td><code>"dry_run": false</code>, setup for live exchange integration. Keep strict risk boundaries.</td>
+  </tr>
 </table>
 </section>
 
