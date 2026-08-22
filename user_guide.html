@@ -346,7 +346,7 @@
 <div class="mermaid">
 graph TD
     A[Binance Public API<br/>api.binance.us] -->|1h OHLCV candles| B[Freqtrade Engine<br/>PID 2338]
-    B --> C[BtcTrendStrategy<br/>populate_indicators]
+    B --> C[MultiFactorBtcStrategy<br/>populate_indicators]
     C --> D{Signal<br/>Engine}
     D -->|Enter Long| E[Simulated Order<br/>dry_run DB]
     D -->|No Signal| F[Wait Next Candle]
@@ -364,7 +364,7 @@ graph TD
 <table>
   <tr><th>Component</th><th>What It Does</th></tr>
   <tr><td><code>config_local.json</code></td><td>All bot settings — exchange, pair, risk params, API server</td></tr>
-  <tr><td><code>BtcTrendStrategy.py</code></td><td>Defines indicators, entry/exit logic, ROI/stoploss rules</td></tr>
+  <tr><td><code>MultiFactorBtcStrategy.py</code></td><td>Defines indicators, entry/exit logic, ROI/stoploss rules</td></tr>
   <tr><td><code>tradesv3.dryrun.sqlite</code></td><td>SQLite database storing all simulated trade records</td></tr>
   <tr><td><code>REST API :8080</code></td><td>Live bot control — query state, force trades, view balance</td></tr>
   <tr><td><code>FreqUI</code></td><td>Web dashboard served at <code>http://localhost:8080</code></td></tr>
@@ -419,11 +419,16 @@ graph LR
 ├── <span class="file">standalone_backtest.py</span>      <span class="note">← Offline backtest engine (no network needed)</span>
 ├── <span class="file">generate_data.py</span>            <span class="note">← Generates synthetic OHLCV data (GBM)</span>
 ├── <span class="file">seed_markets_cache.py</span>       <span class="note">← Pre-seeds markets cache (bypasses geo-block)</span>
+├── <span class="file">hermes_monitor.sh</span>           <span class="note">← Discord watchdog daemon</span>
+├── <span class="file">.env.example</span>                <span class="note">← Environment variables template</span>
 └── <span class="dir">user_data/</span>
     ├── <span class="file">config.json</span>              <span class="note">← Container config (/freqtrade/... paths)</span>
+    ├── <span class="file">config.example.json</span>      <span class="note">← Sanitized config safe for GitHub</span>
     ├── <span class="file">config_local.json</span>        <span class="note">← Host config (absolute paths) ← USE THIS</span>
+    ├── <span class="dir">scripts/</span>
+    │   └── <span class="file">factor_collector.py</span>  <span class="note">← Ingests F&G and Funding Rate</span>
     ├── <span class="dir">strategies/</span>
-    │   └── <span class="file">BtcTrendStrategy.py</span>  <span class="note">← THE strategy file</span>
+    │   └── <span class="file">MultiFactorBtcStrategy.py</span>  <span class="note">← THE strategy file</span>
     ├── <span class="dir">data/binance/</span>
     │   └── <span class="file">BTC_USDT-1h.json</span>     <span class="note">← 4,320 hourly candles (180 days)</span>
     ├── <span class="dir">backtest_results/</span>
@@ -590,7 +595,7 @@ sequenceDiagram
       <h4>Start the bot (if not already running)</h4>
       <pre><code>conda run -n freqtrade-btc freqtrade trade \
   --config user_data/config_local.json \
-  --strategy BtcTrendStrategy \
+  --strategy MultiFactorBtcStrategy \
   --strategy-path user_data/strategies \
   --logfile user_data/logs/freqtrade.log \
   --dry-run-wallet 1000 &</code></pre>
@@ -637,7 +642,7 @@ sequenceDiagram
 <h3>Bot Control</h3>
 <table>
   <tr><th>Task</th><th>Command</th></tr>
-  <tr><td>Start bot</td><td><code>conda run -n freqtrade-btc freqtrade trade --config user_data/config_local.json --strategy BtcTrendStrategy --strategy-path user_data/strategies --dry-run-wallet 1000 &</code></td></tr>
+  <tr><td>Start bot</td><td><code>conda run -n freqtrade-btc freqtrade trade --config user_data/config_local.json --strategy MultiFactorBtcStrategy --strategy-path user_data/strategies --dry-run-wallet 1000 &</code></td></tr>
   <tr><td>Stop bot</td><td><code>pkill -f "freqtrade trade"</code></td></tr>
   <tr><td>View live logs</td><td><code>tail -f user_data/logs/freqtrade.log</code></td></tr>
   <tr><td>Check process</td><td><code>ps aux | grep freqtrade</code></td></tr>
@@ -857,7 +862,7 @@ flowchart LR
 <h3>Run Hyperopt</h3>
 <pre><code>conda run -n freqtrade-btc freqtrade hyperopt \
   --config user_data/config_local.json \
-  --strategy BtcTrendStrategy \
+  --strategy MultiFactorBtcStrategy \
   --strategy-path user_data/strategies \
   --hyperopt-loss SharpeHyperOptLoss \
   --epochs 200 \
@@ -898,6 +903,7 @@ flowchart LR
   <tr><td>API ping</td><td><code>curl -u freqtrader:freqtrader localhost:8080/api/v1/ping</code></td><td>Daily</td></tr>
   <tr><td>Error lines in log</td><td><code>grep ERROR user_data/logs/freqtrade.log</code></td><td>Daily</td></tr>
   <tr><td>Cumulative P&L</td><td>FreqUI Profit chart</td><td>Weekly</td></tr>
+  <tr><td>Discord Alerts</td><td>Check your Discord channel for <code>hermes_monitor.sh</code> alerts</td><td>Live (Push)</td></tr>
   <tr><td>Win rate trend</td><td>FreqUI Trade History</td><td>Weekly</td></tr>
   <tr><td>Exit reason distribution</td><td><code>backtest_results.json</code></td><td>After each backtest</td></tr>
 </table>
@@ -1008,7 +1014,7 @@ flowchart TD
   },
 
   // ── Strategy location ──────────────────────────────────────────
-  "strategy": "BtcTrendStrategy",
+  "strategy": "MultiFactorBtcStrategy",
   "initial_state": "running"    // Auto-start on launch
 }</code></pre>
 </section>
@@ -1081,27 +1087,36 @@ flowchart LR
     F --> G[http://localhost:8080<br/>FreqUI available]
 </div>
 
-<pre><code># Step 1 — pull the image
+<pre><code># Step 1 — clone and setup secrets
+git clone -b staging https://github.com/johntyq0411/bitTradebot.git ft_userdata
+cd ft_userdata
+cp .env.example .env && nano .env
+cp user_data/config.example.json user_data/config.json && nano user_data/config.json
+
+# Step 2 — pull the image
 docker compose pull
 
-# Step 2 — download live data (needs Binance access or VPN)
+# Step 3 — download live data (needs Binance access or VPN)
 docker compose run --rm freqtrade download-data \
   --config /freqtrade/user_data/config.json \
   --pairs BTC/USDT --timeframe 1h --days 180
 
-# Step 3 — run backtest inside container
+# Step 4 — run backtest inside container
 docker compose run --rm freqtrade backtesting \
   --config /freqtrade/user_data/config.json \
-  --strategy BtcTrendStrategy \
+  --strategy MultiFactorBtcStrategy \
   --export trades
 
-# Step 4 — launch live paper trading bot
+# Step 5 — launch live paper trading bot & factor sidecar
 docker compose up -d
 
-# Step 5 — stream logs
+# Step 6 — start Discord monitor
+nohup ./hermes_monitor.sh > monitor.log 2>&1 &
+
+# Step 7 — stream logs
 docker compose logs -f
 
-# Step 6 — stop
+# Step 8 — stop
 docker compose down</code></pre>
 
 <h3>Why Docker Over Native?</h3>
@@ -1152,7 +1167,7 @@ gitGraph
 <hr>
 
 <p style="color:var(--muted);font-size:12px;margin-top:32px;">
-  Freqtrade BTC/USDT Paper Trading Bot · v2026.7 · Python 3.11 · Strategy: BtcTrendStrategy<br>
+  Freqtrade BTC/USDT Paper Trading Bot · v2026.7 · Python 3.11 · Strategy: MultiFactorBtcStrategy<br>
   <strong style="color:var(--red)">PAPER TRADING ONLY — No real funds at risk.</strong>
 </p>
 
