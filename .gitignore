@@ -1,0 +1,42 @@
+# Git ignore for Freqtrade paper-trading bot project
+
+# ── Freqtrade generated files ──────────────────────────────────────────────
+user_data/logs/*.log
+user_data/logs/backtest_output.txt
+user_data/backtest_results/*.json
+user_data/backtest_results/*.pkl
+user_data/data/
+
+# ── Python ─────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+
+# ── Local config (host-relative paths, not for version control) ────────────
+user_data/config_local.json
+
+# ── macOS ──────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ── Editors ────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ── Secrets (safety net — though config.json already has blank keys) ───────
+*.env
+.env*
+secrets.json

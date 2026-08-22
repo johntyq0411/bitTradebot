@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Freqtrade BTC/USDT Bot — User Guide</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg:       #0f1117;
+    --surface:  #1a1d27;
+    --border:   #2e3347;
+    --text:     #d4d8e8;
+    --muted:    #7a8099;
+    --accent:   #4fa3ff;
+    --green:    #3ddc84;
+    --red:      #ff5c5c;
+    --yellow:   #ffd166;
+    --purple:   #c792ea;
+    --code-bg:  #12151f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── Layout ── */
+  .layout { display: flex; min-height: 100vh; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 24px 0;
+  }
+  .sidebar h2 {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 20px 8px;
+    margin-top: 16px;
+  }
+  .sidebar h2:first-child { margin-top: 0; }
+  .sidebar a {
+    display: block;
+    padding: 5px 20px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    border-left: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+  }
+  .sidebar a:hover, .sidebar a.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+  }
+  .sidebar .logo {
+    padding: 0 20px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+  .sidebar .logo span { color: var(--accent); }
+
+  /* ── Main content ── */
+  .main {
+    flex: 1;
+    max-width: 860px;
+    padding: 48px 48px 96px;
+  }
+
+  /* ── Headings ── */
+  h1 { font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  h2 { font-size: 20px; font-weight: 600; color: #fff; margin: 48px 0 16px;
+       padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 15px; font-weight: 600; color: var(--accent); margin: 28px 0 10px; }
+  h4 { font-size: 13px; font-weight: 600; color: var(--yellow); margin: 20px 0 8px; text-transform: uppercase; letter-spacing: .05em; }
+
+  p { margin-bottom: 14px; }
+
+  /* ── Subtitle ── */
+  .subtitle { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-right: 6px;
+    margin-bottom: 6px;
+  }
+  .badge-green  { background: #1a3a2a; color: var(--green); border: 1px solid #2a5a3a; }
+  .badge-blue   { background: #1a2a3a; color: var(--accent); border: 1px solid #2a4a6a; }
+  .badge-yellow { background: #2a2010; color: var(--yellow); border: 1px solid #4a3820; }
+  .badge-red    { background: #2a1a1a; color: var(--red);    border: 1px solid #4a2a2a; }
+
+  /* ── Code ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 12px 0 20px;
+  }
+  code { font-family: 'Cascadia Code', 'Fira Code', 'Courier New', monospace; }
+  pre code { color: var(--text); }
+  p code, li code {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 12px;
+    color: var(--purple);
+  }
+
+  /* ── Tables ── */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 13px; }
+  th { background: var(--surface); color: var(--muted); text-align: left;
+       padding: 8px 12px; border-bottom: 2px solid var(--border);
+       font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.02); }
+
+  /* ── Callouts ── */
+  .callout {
+    border-left: 3px solid;
+    padding: 12px 16px;
+    border-radius: 0 6px 6px 0;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .callout-tip    { border-color: var(--green);  background: #0e1f16; }
+  .callout-warn   { border-color: var(--yellow); background: #1f1800; }
+  .callout-danger { border-color: var(--red);    background: #1f0e0e; }
+  .callout-info   { border-color: var(--accent); background: #0e1626; }
+  .callout strong { display: block; margin-bottom: 4px; font-size: 12px;
+                    text-transform: uppercase; letter-spacing: .05em; }
+  .callout-tip    strong { color: var(--green);  }
+  .callout-warn   strong { color: var(--yellow); }
+  .callout-danger strong { color: var(--red);    }
+  .callout-info   strong { color: var(--accent); }
+
+  /* ── Steps ── */
+  .steps { counter-reset: step; margin: 16px 0; }
+  .step {
+    counter-increment: step;
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    background: var(--accent);
+    color: #000;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step-body h4 { margin-top: 4px; margin-bottom: 6px; color: #fff; text-transform: none;
+                  font-size: 14px; letter-spacing: 0; }
+
+  /* ── Mermaid charts ── */
+  .mermaid {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin: 16px 0 24px;
+    overflow-x: auto;
+    text-align: center;
+  }
+
+  /* ── Signal card ── */
+  .signal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0 24px; }
+  .signal-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .signal-card.buy  { border-top: 3px solid var(--green); }
+  .signal-card.sell { border-top: 3px solid var(--red); }
+  .signal-card h4 { margin-top: 0; font-size: 12px; }
+  .signal-card.buy  h4 { color: var(--green); }
+  .signal-card.sell h4 { color: var(--red); }
+  .signal-card ul { padding-left: 18px; font-size: 13px; }
+  .signal-card ul li { margin-bottom: 4px; }
+
+  /* ── Metric grid ── */
+  .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0 24px; }
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .metric .val { font-size: 22px; font-weight: 700; color: #fff; }
+  .metric .val.pos { color: var(--green); }
+  .metric .val.neg { color: var(--red); }
+  .metric .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* ── File tree ── */
+  .tree { font-family: monospace; font-size: 13px; line-height: 1.8;
+          background: var(--code-bg); border: 1px solid var(--border);
+          border-radius: 6px; padding: 16px; margin: 12px 0 20px; }
+  .tree .dir  { color: var(--accent); }
+  .tree .file { color: var(--text); }
+  .tree .note { color: var(--muted); }
+
+  /* ── Sections ── */
+  section { padding-top: 16px; }
+
+  /* ── Divider ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+
+  ul, ol { padding-left: 20px; margin-bottom: 14px; }
+  li { margin-bottom: 4px; font-size: 14px; }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { padding: 24px 20px 48px; }
+    .signal-grid, .metric-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      background: '#1a1d27',
+      primaryColor: '#4fa3ff',
+      primaryTextColor: '#d4d8e8',
+      primaryBorderColor: '#2e3347',
+      lineColor: '#7a8099',
+      secondaryColor: '#12151f',
+      tertiaryColor: '#1a1d27',
+      edgeLabelBackground: '#1a1d27',
+      fontSize: '13px'
+    },
+    flowchart: { curve: 'basis', useMaxWidth: true }
+  });
+</script>
+
+<div class="layout">
+
+<!-- ── Sidebar ── -->
+<nav class="sidebar">
+  <div class="logo">🤖 <span>FreqBot</span> Guide</div>
+
+  <h2>Overview</h2>
+  <a href="#what-is-it">What Is This Bot?</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#files">Project Files</a>
+
+  <h2>Strategy</h2>
+  <a href="#indicators">Indicators</a>
+  <a href="#signals">Entry & Exit Logic</a>
+  <a href="#risk">Risk Management</a>
+  <a href="#trade-lifecycle">Trade Lifecycle</a>
+
+  <h2>Setup & Usage</h2>
+  <a href="#quickstart">Quick Start</a>
+  <a href="#commands">Key Commands</a>
+  <a href="#webui">Web UI (FreqUI)</a>
+
+  <h2>Backtest</h2>
+  <a href="#backtest-how">How Backtesting Works</a>
+  <a href="#backtest-results">Your Results</a>
+  <a href="#interpreting">Interpreting Results</a>
+
+  <h2>Best Practices</h2>
+  <a href="#safety">Safety Rules</a>
+  <a href="#tuning">Tuning & Hyperopt</a>
+  <a href="#monitoring">Monitoring</a>
+  <a href="#troubleshoot">Troubleshooting</a>
+
+  <h2>Reference</h2>
+  <a href="#config-ref">Config Reference</a>
+  <a href="#api-ref">API Endpoints</a>
+  <a href="#docker">Docker Deployment</a>
+</nav>
+
+<!-- ── Main ── -->
+<main class="main">
+
+<!-- ════════════════════════ OVERVIEW ════════════════════════ -->
+
+<section id="what-is-it">
+<h1>Freqtrade BTC/USDT Bot — User Guide</h1>
+<p class="subtitle">
+  <span class="badge badge-green">✓ PAPER TRADING ONLY</span>
+  <span class="badge badge-blue">Freqtrade 2026.7</span>
+  <span class="badge badge-blue">Python 3.11</span>
+  <span class="badge badge-yellow">BTC/USDT · 1h</span>
+</p>
+
+<p>This is an automated cryptocurrency paper-trading bot built on <strong>Freqtrade</strong>, an open-source trading framework. It runs an EMA crossover + RSI momentum strategy on the BTC/USDT pair using 1-hour candles, with <strong>no real money at risk</strong> — all trades are fully simulated.</p>
+
+<div class="callout callout-danger">
+  <strong>⚠ Safety First</strong>
+  <code>dry_run: true</code> is enforced in all configs. Exchange API keys are blank. The bot cannot place real orders. Do not add real API keys unless you fully understand the risks and have thoroughly validated the strategy.
+</div>
+</section>
+
+<hr>
+
+<section id="architecture">
+<h2>System Architecture</h2>
+<p>Here is how all the components connect — from live market data to simulated trade execution:</p>
+
+<div class="mermaid">
+graph TD
+    A[Binance Public API<br/>api.binance.us] -->|1h OHLCV candles| B[Freqtrade Engine<br/>PID 2338]
+    B --> C[BtcTrendStrategy<br/>populate_indicators]
+    C --> D{Signal<br/>Engine}
+    D -->|Enter Long| E[Simulated Order<br/>dry_run DB]
+    D -->|No Signal| F[Wait Next Candle]
+    E --> G{Exit Conditions}
+    G -->|ROI Hit| H[Close Trade ✓]
+    G -->|Stop-Loss| H
+    G -->|Exit Signal| H
+    H --> I[Update Paper<br/>Wallet Balance]
+    B --> J[REST API<br/>:8080]
+    J --> K[FreqUI<br/>Web Dashboard]
+    B --> L[Log File<br/>freqtrade.log]
+</div>
+
+<h3>Component Roles</h3>
+<table>
+  <tr><th>Component</th><th>What It Does</th></tr>
+  <tr><td><code>config_local.json</code></td><td>All bot settings — exchange, pair, risk params, API server</td></tr>
+  <tr><td><code>BtcTrendStrategy.py</code></td><td>Defines indicators, entry/exit logic, ROI/stoploss rules</td></tr>
+  <tr><td><code>tradesv3.dryrun.sqlite</code></td><td>SQLite database storing all simulated trade records</td></tr>
+  <tr><td><code>REST API :8080</code></td><td>Live bot control — query state, force trades, view balance</td></tr>
+  <tr><td><code>FreqUI</code></td><td>Web dashboard served at <code>http://localhost:8080</code></td></tr>
+  <tr><td><code>freqtrade.log</code></td><td>Full timestamped log of every bot action</td></tr>
+</table>
+</section>
+
+<hr>
+
+<section id="files">
+<h2>Project Files</h2>
+
+<div class="tree">
+<span class="dir">modest-bohr/</span>
+├── <span class="file">docker-compose.yml</span>          <span class="note">← Docker deployment (needs Docker Desktop)</span>
+├── <span class="file">setup.sh</span>                    <span class="note">← All-in-one Docker setup script</span>
+├── <span class="file">freqtrade_local.sh</span>          <span class="note">← Native conda runner (download/backtest/trade)</span>
+├── <span class="file">standalone_backtest.py</span>      <span class="note">← Offline backtest engine (no network needed)</span>
+├── <span class="file">generate_data.py</span>            <span class="note">← Generates synthetic OHLCV data (GBM)</span>
+├── <span class="file">seed_markets_cache.py</span>       <span class="note">← Pre-seeds markets cache (bypasses geo-block)</span>
+└── <span class="dir">user_data/</span>
+    ├── <span class="file">config.json</span>              <span class="note">← Container config (/freqtrade/... paths)</span>
+    ├── <span class="file">config_local.json</span>        <span class="note">← Host config (absolute paths) ← USE THIS</span>
+    ├── <span class="dir">strategies/</span>
+    │   └── <span class="file">BtcTrendStrategy.py</span>  <span class="note">← THE strategy file</span>
+    ├── <span class="dir">data/binance/</span>
+    │   └── <span class="file">BTC_USDT-1h.json</span>     <span class="note">← 4,320 hourly candles (180 days)</span>
+    ├── <span class="dir">backtest_results/</span>
+    │   └── <span class="file">backtest_results.json</span><span class="note">← Full trade log from last backtest</span>
+    └── <span class="dir">logs/</span>
+        └── <span class="file">freqtrade.log</span>        <span class="note">← Live bot activity log</span>
+</div>
+</section>
+
+<!-- ════════════════════════ STRATEGY ════════════════════════ -->
+
+<section id="indicators">
+<h2>Strategy — How It Works</h2>
+
+<h3>The Three Indicators</h3>
+<table>
+  <tr><th>Indicator</th><th>Period</th><th>Purpose</th><th>Colour in FreqUI</th></tr>
+  <tr><td><strong>EMA 20</strong></td><td>20 candles (20h)</td><td>Fast-moving average — tracks recent price trend</td><td style="color:#00bfff">■ Cyan</td></tr>
+  <tr><td><strong>EMA 50</strong></td><td>50 candles (50h)</td><td>Slow-moving average — tracks broader trend</td><td style="color:#ff6b35">■ Orange</td></tr>
+  <tr><td><strong>RSI 14</strong></td><td>14 candles (14h)</td><td>Momentum oscillator — 0–100 scale, filters overextended entries</td><td style="color:#a29bfe">■ Purple</td></tr>
+</table>
+
+<h4>What is an EMA?</h4>
+<p>An Exponential Moving Average gives more weight to recent prices. When the fast EMA (20) crosses above the slow EMA (50), it signals bullish momentum — price is trending up. When it crosses below, trend has reversed.</p>
+
+<h4>What is RSI?</h4>
+<p>The Relative Strength Index measures how fast price has moved. Values below 30 = oversold (often bounce up), above 70 = overbought (often pulls back). We filter entries to RSI 40–65 — a "healthy momentum" zone.</p>
+</section>
+
+<hr>
+
+<section id="signals">
+<h3>Entry & Exit Signal Logic</h3>
+
+<div class="signal-grid">
+  <div class="signal-card buy">
+    <h4>▲ BUY (Enter Long)</h4>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:8px">ALL conditions must be true on the same candle:</p>
+    <ul>
+      <li>EMA 20 just crossed <strong>above</strong> EMA 50</li>
+      <li>RSI is between <strong>40 and 65</strong></li>
+      <li>Volume &gt; 0 (active market)</li>
+    </ul>
+  </div>
+  <div class="signal-card sell">
+    <h4>▼ SELL (Exit Long)</h4>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:8px">ANY condition triggers exit:</p>
+    <ul>
+      <li>EMA 20 just crossed <strong>below</strong> EMA 50, OR</li>
+      <li>RSI exceeds <strong>75</strong> (overbought), OR</li>
+      <li>ROI target hit, OR</li>
+      <li>Stop-loss at −4% triggered</li>
+    </ul>
+  </div>
+</div>
+
+<h3>Signal Flow (Decision Tree)</h3>
+
+<div class="mermaid">
+flowchart TD
+    A[New 1h Candle Closes] --> B{In a Trade?}
+
+    B -->|No| C{EMA20 just crossed<br/>above EMA50?}
+    C -->|No| Z1[Wait for next candle]
+    C -->|Yes| D{RSI between<br/>40 and 65?}
+    D -->|No| Z1
+    D -->|Yes| E{Volume > 0?}
+    E -->|No| Z1
+    E -->|Yes| F[🟢 ENTER LONG<br/>Buy BTC/USDT at market close]
+
+    B -->|Yes| G{Check ROI Table<br/>for time held}
+    G -->|Profit ≥ ROI threshold| H[💰 EXIT: ROI Hit]
+    G -->|Not yet| I{Price dropped<br/>≥ 4% from entry?}
+    I -->|Yes| J[🛑 EXIT: Stop-Loss]
+    I -->|No| K{EMA20 crossed<br/>below EMA50?}
+    K -->|Yes| L[📉 EXIT: Signal]
+    K -->|No| M{RSI > 75?}
+    M -->|Yes| N[📈 EXIT: RSI Overbought]
+    M -->|No| Z2[Hold position]
+</div>
+</section>
+
+<hr>
+
+<section id="risk">
+<h3>Risk Management Rules</h3>
+
+<h4>Minimal ROI Table</h4>
+<p>The bot auto-sells if profit reaches these thresholds (measured from trade open):</p>
+<table>
+  <tr><th>Time in Trade</th><th>Required Profit to Exit</th><th>Logic</th></tr>
+  <tr><td>0 minutes (any time)</td><td><strong>5.0%</strong></td><td>Take 5% immediately if it spikes</td></tr>
+  <tr><td>2 hours +</td><td><strong>3.0%</strong></td><td>Accept lower target after 2h hold</td></tr>
+  <tr><td>4 hours +</td><td><strong>1.5%</strong></td><td>Just get out profitably after 4h</td></tr>
+</table>
+
+<h4>Stop-Loss</h4>
+<p>A hard stop at <strong>−4%</strong> from entry price. If BTC price drops 4% after entry, the position is closed immediately at market price, limiting the loss.</p>
+
+<div class="callout callout-info">
+  <strong>ℹ Example Trade</strong>
+  Entry at $100,000. Stop-loss fires at $96,000 (−4%). ROI target (5%) fires at $105,000. The trade will exit whichever comes first — ROI, stoploss, or signal.
+</div>
+
+<h4>Stake Settings</h4>
+<table>
+  <tr><th>Setting</th><th>Value</th><th>Meaning</th></tr>
+  <tr><td><code>stake_amount</code></td><td><code>"unlimited"</code></td><td>Uses 100% of available paper balance per trade</td></tr>
+  <tr><td><code>max_open_trades</code></td><td><code>1</code></td><td>Only one trade open at a time — never splits capital</td></tr>
+  <tr><td><code>dry_run_wallet</code></td><td><code>1000 USDT</code></td><td>Starting simulated balance</td></tr>
+</table>
+</section>
+
+<hr>
+
+<section id="trade-lifecycle">
+<h3>Full Trade Lifecycle</h3>
+
+<div class="mermaid">
+sequenceDiagram
+    participant C as Candle Feed
+    participant E as Strategy Engine
+    participant W as Paper Wallet
+    participant DB as SQLite DB
+    participant UI as FreqUI
+
+    C->>E: New 1h candle closes
+    E->>E: Compute EMA20, EMA50, RSI14
+    E->>E: Check entry conditions
+    E->>W: Deduct stake (1000 USDT)
+    E->>DB: INSERT trade record (open)
+    E->>UI: Notify: Trade opened BTC/USDT
+
+    loop Every new candle
+        C->>E: New candle
+        E->>E: Check ROI / stoploss / exit signal
+    end
+
+    E->>W: Add back stake + profit/loss
+    E->>DB: UPDATE trade record (closed)
+    E->>UI: Notify: Trade closed +3.2%
+</div>
+</section>
+
+<!-- ════════════════════════ SETUP ════════════════════════ -->
+
+<section id="quickstart">
+<h2>Quick Start</h2>
+
+<div class="steps">
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h4>Start the bot (if not already running)</h4>
+      <pre><code>conda run -n freqtrade-btc freqtrade trade \
+  --config user_data/config_local.json \
+  --strategy BtcTrendStrategy \
+  --strategy-path user_data/strategies \
+  --logfile user_data/logs/freqtrade.log \
+  --dry-run-wallet 1000 &</code></pre>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h4>Verify it's running</h4>
+      <pre><code>curl -u freqtrader:freqtrader http://localhost:8080/api/v1/ping
+# Expected: {"status":"pong"}</code></pre>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h4>Open the Web UI</h4>
+      <p>Go to <a href="http://localhost:8080" target="_blank">http://localhost:8080</a> in your browser.<br>
+      Login: <code>freqtrader</code> / <code>freqtrader</code></p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h4>Run a backtest</h4>
+      <pre><code>conda run -n freqtrade-btc python3 standalone_backtest.py</code></pre>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <h4>Stop the bot</h4>
+      <pre><code>pkill -f "freqtrade trade"</code></pre>
+    </div>
+  </div>
+</div>
+</section>
+
+<hr>
+
+<section id="commands">
+<h2>Key Commands Reference</h2>
+
+<h3>Bot Control</h3>
+<table>
+  <tr><th>Task</th><th>Command</th></tr>
+  <tr><td>Start bot</td><td><code>conda run -n freqtrade-btc freqtrade trade --config user_data/config_local.json --strategy BtcTrendStrategy --strategy-path user_data/strategies --dry-run-wallet 1000 &</code></td></tr>
+  <tr><td>Stop bot</td><td><code>pkill -f "freqtrade trade"</code></td></tr>
+  <tr><td>View live logs</td><td><code>tail -f user_data/logs/freqtrade.log</code></td></tr>
+  <tr><td>Check process</td><td><code>ps aux | grep freqtrade</code></td></tr>
+</table>
+
+<h3>Data & Backtesting</h3>
+<table>
+  <tr><th>Task</th><th>Command</th></tr>
+  <tr><td>Run offline backtest</td><td><code>conda run -n freqtrade-btc python3 standalone_backtest.py</code></td></tr>
+  <tr><td>Download data (needs VPN)</td><td><code>conda run -n freqtrade-btc freqtrade download-data --config user_data/config_local.json --pairs BTC/USDT --timeframe 1h --days 180</code></td></tr>
+  <tr><td>Regenerate synthetic data</td><td><code>conda run -n freqtrade-btc python3 generate_data.py</code></td></tr>
+</table>
+
+<h3>REST API Queries</h3>
+<table>
+  <tr><th>What</th><th>Endpoint</th></tr>
+  <tr><td>Ping / health</td><td><code>GET /api/v1/ping</code></td></tr>
+  <tr><td>Bot config</td><td><code>GET /api/v1/show_config</code></td></tr>
+  <tr><td>Wallet balance</td><td><code>GET /api/v1/balance</code></td></tr>
+  <tr><td>Open trades</td><td><code>GET /api/v1/status</code></td></tr>
+  <tr><td>Trade history</td><td><code>GET /api/v1/trades</code></td></tr>
+  <tr><td>Profit summary</td><td><code>GET /api/v1/profit</code></td></tr>
+  <tr><td>Force buy</td><td><code>POST /api/v1/forcebuy</code></td></tr>
+  <tr><td>Force sell</td><td><code>POST /api/v1/forcesell</code></td></tr>
+  <tr><td>Start bot</td><td><code>POST /api/v1/start</code></td></tr>
+  <tr><td>Stop bot</td><td><code>POST /api/v1/stop</code></td></tr>
+</table>
+
+<pre><code># Example: check balance via curl
+curl -s -u freqtrader:freqtrader http://localhost:8080/api/v1/balance | python3 -m json.tool
+
+# Example: see all closed trades
+curl -s -u freqtrader:freqtrader "http://localhost:8080/api/v1/trades?limit=10" | python3 -m json.tool</code></pre>
+</section>
+
+<hr>
+
+<section id="webui">
+<h2>Web UI (FreqUI) — Page by Page</h2>
+
+<table>
+  <tr><th>Page / Section</th><th>What You See</th><th>What to Look For</th></tr>
+  <tr>
+    <td><strong>Dashboard</strong></td>
+    <td>Open trades, daily profit, win rate</td>
+    <td>Bot state = <span style="color:var(--green)">Running</span>, wallet balance</td>
+  </tr>
+  <tr>
+    <td><strong>Trade History</strong></td>
+    <td>Table of all closed trades with P&L</td>
+    <td>Exit reasons — too many <code>stop_loss</code> exits = strategy needs tuning</td>
+  </tr>
+  <tr>
+    <td><strong>Profit Chart</strong></td>
+    <td>Cumulative profit over time</td>
+    <td>Should trend up. Deep drawdowns = reduce stoploss or tighten entry</td>
+  </tr>
+  <tr>
+    <td><strong>Logs</strong></td>
+    <td>Live scrolling log output</td>
+    <td>Watch for ERROR or WARNING lines — especially around candle fetch</td>
+  </tr>
+  <tr>
+    <td><strong>Config</strong></td>
+    <td>Current running configuration JSON</td>
+    <td>Confirm <code>dry_run: true</code> is always shown here</td>
+  </tr>
+</table>
+
+<div class="callout callout-warn">
+  <strong>⚠ Note on Candle Feed</strong>
+  Because <code>stream.binance.com</code> (WebSocket) is geo-blocked on this network, live candle updates come via REST polling. The bot will update its signals at each candle close (hourly) rather than real-time. This is fine for a 1h strategy.
+</div>
+</section>
+
+<!-- ════════════════════════ BACKTEST ════════════════════════ -->
+
+<section id="backtest-how">
+<h2>Backtesting — How It Works</h2>
+
+<p>The backtest replays historical candles as if they were live — the strategy generates entry/exit signals on each candle, and the engine simulates opening and closing trades with realistic fees.</p>
+
+<div class="mermaid">
+flowchart LR
+    A[OHLCV JSON<br/>4320 candles] --> B[Compute<br/>EMA20 EMA50 RSI]
+    B --> C[Generate signals<br/>per candle]
+    C --> D{Entry signal?}
+    D -->|Yes| E[Open simulated trade<br/>record entry price]
+    D -->|No| C
+    E --> F[Track profit<br/>each candle]
+    F --> G{Exit condition?}
+    G -->|No| F
+    G -->|Yes| H[Close trade<br/>record P&L + fee]
+    H --> C
+    C --> I[All candles done]
+    I --> J[Compute metrics:<br/>win rate, drawdown,<br/>profit factor, Sharpe]
+</div>
+
+<h3>Key Assumptions</h3>
+<table>
+  <tr><th>Assumption</th><th>Value</th><th>Note</th></tr>
+  <tr><td>Entry fee</td><td>0.1% (taker)</td><td>Binance spot taker rate</td></tr>
+  <tr><td>Exit fee</td><td>0.1% (taker)</td><td>Applied on exit value</td></tr>
+  <tr><td>Slippage</td><td>0%</td><td>Conservative — real trading may have slight slippage</td></tr>
+  <tr><td>Startup warmup</td><td>60 candles skipped</td><td>EMA/RSI need history to stabilise</td></tr>
+  <tr><td>Trade size</td><td>100% of available capital</td><td><code>stake_amount: unlimited</code></td></tr>
+  <tr><td>Max concurrent</td><td>1 trade</td><td>Can't compound until previous trade closes</td></tr>
+</table>
+</section>
+
+<hr>
+
+<section id="backtest-results">
+<h2>Your Backtest Results</h2>
+
+<div class="metric-grid">
+  <div class="metric"><div class="val">173</div><div class="lbl">Total Trades</div></div>
+  <div class="metric"><div class="val pos">60.7%</div><div class="lbl">Win Rate</div></div>
+  <div class="metric"><div class="val neg">−24.0%</div><div class="lbl">Total Return</div></div>
+  <div class="metric"><div class="val neg">40.7%</div><div class="lbl">Max Drawdown</div></div>
+  <div class="metric"><div class="val">0.89×</div><div class="lbl">Profit Factor</div></div>
+  <div class="metric"><div class="val">10.0h</div><div class="lbl">Avg Trade Duration</div></div>
+</div>
+
+<table>
+  <tr><th>Metric</th><th>Value</th></tr>
+  <tr><td>Period</td><td>Feb 25 → Aug 22, 2026 (180 days)</td></tr>
+  <tr><td>Starting balance</td><td>1,000.00 USDT</td></tr>
+  <tr><td>Final balance</td><td>759.66 USDT</td></tr>
+  <tr><td>Avg win size</td><td>+1.93%</td></tr>
+  <tr><td>Avg loss size</td><td>−3.29%</td></tr>
+  <tr><td>Best trade</td><td>+5.20%</td></tr>
+  <tr><td>Worst trade</td><td>−4.20%</td></tr>
+  <tr><td>ROI exits</td><td>104 (60.1%)</td></tr>
+  <tr><td>Stop-loss exits</td><td>39 (22.5%)</td></tr>
+  <tr><td>Signal exits</td><td>30 (17.3%)</td></tr>
+</table>
+</section>
+
+<hr>
+
+<section id="interpreting">
+<h3>Interpreting the Results</h3>
+
+<div class="mermaid">
+flowchart TD
+    A[Backtest Complete] --> B{Win Rate > 50%?}
+    B -->|Yes ✓ 60.7%| C{Profit Factor > 1?}
+    B -->|No| X1[❌ Entry signals too weak<br/>Tighten EMA / RSI filter]
+
+    C -->|Yes| D{Max DD < 20%?}
+    C -->|No ✗ 0.89x| Y1[⚠ Avg loss > avg win<br/>Widen ROI targets<br/>or tighten stoploss]
+
+    D -->|Yes| E[✅ Strategy Healthy<br/>Paper trade live]
+    D -->|No ✗ 40.7%| Z1[⚠ Too many big losses<br/>Widen stoploss to -6%<br/>or add trailing stop]
+</div>
+
+<div class="callout callout-warn">
+  <strong>⚠ On Synthetic Data</strong>
+  This backtest used GBM-generated data with σ=80% annual volatility — more chaotic than real BTC price movement. Real BTC has trend persistence and support/resistance structure that the EMA crossover exploits well. The −24% result on synthetic data is a stress-test, not a forecast.
+</div>
+
+<h4>The Core Problem: Loss/Win Asymmetry</h4>
+<p>Average winner (+1.93%) is smaller than average loser (−3.29%). This means even with a 60.7% win rate, the losses outweigh the wins. The fix is either:</p>
+<ul>
+  <li><strong>Raise ROI targets</strong> — let winners run to 8–10% instead of 5%</li>
+  <li><strong>Tighten the stop-loss</strong> — e.g. −2.5% instead of −4% (but risks more stopped trades)</li>
+  <li><strong>Use a trailing stop</strong> — locks in gains as price rises</li>
+</ul>
+</section>
+
+<!-- ════════════════════════ BEST PRACTICES ════════════════════════ -->
+
+<section id="safety">
+<h2>Best Practices — Safety</h2>
+
+<div class="callout callout-danger">
+  <strong>🔴 Never do these things</strong>
+  <ul style="margin-top:8px">
+    <li>Never add real API keys to <code>config_local.json</code> while <code>dry_run: true</code> is set (the keys are unused, but it's unnecessary risk)</li>
+    <li>Never change <code>dry_run</code> to <code>false</code> without a minimum of 3 months paper trading validation</li>
+    <li>Never run with <code>stake_amount: unlimited</code> in live mode without position sizing study</li>
+    <li>Never skip backtesting when you change the strategy logic</li>
+  </ul>
+</div>
+
+<h3>Paper Trading Validation Checklist</h3>
+<p>Before ever considering live trading, verify all of these:</p>
+<table>
+  <tr><th>#</th><th>Check</th><th>Target</th></tr>
+  <tr><td>1</td><td>Paper trade for at least 90 days live</td><td>All seasons of market</td></tr>
+  <tr><td>2</td><td>Profit Factor</td><td>&gt; 1.3</td></tr>
+  <tr><td>3</td><td>Win Rate</td><td>&gt; 55%</td></tr>
+  <tr><td>4</td><td>Max Drawdown</td><td>&lt; 20%</td></tr>
+  <tr><td>5</td><td>Sharpe Ratio</td><td>&gt; 0.5</td></tr>
+  <tr><td>6</td><td>Minimum 100 trades in backtest</td><td>Statistical significance</td></tr>
+  <tr><td>7</td><td>Walk-forward tested (unseen data)</td><td>No overfitting</td></tr>
+</table>
+</section>
+
+<hr>
+
+<section id="tuning">
+<h2>Best Practices — Tuning & Hyperopt</h2>
+
+<h3>How Hyperopt Works</h3>
+
+<div class="mermaid">
+flowchart LR
+    A[Define parameter<br/>search space] --> B[Freqtrade Hyperopt<br/>runs N epochs]
+    B --> C[Each epoch:<br/>pick param values]
+    C --> D[Run backtest<br/>with those params]
+    D --> E[Score result<br/>using loss function]
+    E --> F{Better than<br/>previous best?}
+    F -->|Yes| G[Save as new best]
+    F -->|No| H[Discard]
+    G --> B
+    H --> B
+    B --> I[After N epochs:<br/>output best params]
+</div>
+
+<h3>Run Hyperopt</h3>
+<pre><code>conda run -n freqtrade-btc freqtrade hyperopt \
+  --config user_data/config_local.json \
+  --strategy BtcTrendStrategy \
+  --strategy-path user_data/strategies \
+  --hyperopt-loss SharpeHyperOptLoss \
+  --epochs 200 \
+  --spaces buy sell</code></pre>
+
+<h3>Optimisable Parameters</h3>
+<table>
+  <tr><th>Parameter</th><th>Default</th><th>Search Range</th><th>Effect</th></tr>
+  <tr><td><code>buy_rsi_lower</code></td><td>40</td><td>30–50</td><td>Lower = more trades, more risk of buying in downtrend</td></tr>
+  <tr><td><code>buy_rsi_upper</code></td><td>65</td><td>55–70</td><td>Higher = allows more momentum entries</td></tr>
+  <tr><td><code>sell_rsi_threshold</code></td><td>75</td><td>70–85</td><td>Higher = lets overbought trades run longer</td></tr>
+</table>
+
+<h3>Choosing a Loss Function</h3>
+<table>
+  <tr><th>Loss Function</th><th>Optimises For</th><th>Best When</th></tr>
+  <tr><td><code>SharpeHyperOptLoss</code></td><td>Risk-adjusted returns (Sharpe ratio)</td><td>General use — recommended</td></tr>
+  <tr><td><code>SortinoHyperOptLoss</code></td><td>Downside risk only</td><td>Want to minimise losses specifically</td></tr>
+  <tr><td><code>MaxDrawDownRelativeHyperOptLoss</code></td><td>Minimise max drawdown</td><td>Capital preservation priority</td></tr>
+  <tr><td><code>ProfitDrawDownHyperOptLoss</code></td><td>Profit vs drawdown ratio</td><td>Balanced approach</td></tr>
+</table>
+
+<div class="callout callout-tip">
+  <strong>✓ Tip: Avoid Overfitting</strong>
+  After hyperopt, always validate on <em>out-of-sample</em> data. Split your data: use 70% for hyperopt and test the winning params on the remaining 30%. If results collapse on the test set, the strategy is overfit.
+</div>
+</section>
+
+<hr>
+
+<section id="monitoring">
+<h2>Best Practices — Monitoring</h2>
+
+<h3>What to Watch Daily</h3>
+<table>
+  <tr><th>Check</th><th>Where</th><th>Frequency</th></tr>
+  <tr><td>Bot still running</td><td><code>ps aux | grep freqtrade</code> or FreqUI</td><td>Daily</td></tr>
+  <tr><td>API ping</td><td><code>curl -u freqtrader:freqtrader localhost:8080/api/v1/ping</code></td><td>Daily</td></tr>
+  <tr><td>Error lines in log</td><td><code>grep ERROR user_data/logs/freqtrade.log</code></td><td>Daily</td></tr>
+  <tr><td>Cumulative P&L</td><td>FreqUI Profit chart</td><td>Weekly</td></tr>
+  <tr><td>Win rate trend</td><td>FreqUI Trade History</td><td>Weekly</td></tr>
+  <tr><td>Exit reason distribution</td><td><code>backtest_results.json</code></td><td>After each backtest</td></tr>
+</table>
+
+<h3>Warning Signs to Act On</h3>
+<table>
+  <tr><th>Warning Sign</th><th>Likely Cause</th><th>Action</th></tr>
+  <tr><td>&gt; 30% exits by stop-loss</td><td>Stoploss too tight or entries in volatile regime</td><td>Widen SL to −6%, raise RSI lower bound</td></tr>
+  <tr><td>Win rate drops below 50%</td><td>Market regime changed</td><td>Pause bot, re-backtest on recent data</td></tr>
+  <tr><td>No trades for 7+ days</td><td>RSI filters too strict or EMA rarely crossing</td><td>Check logs, lower RSI lower bound slightly</td></tr>
+  <tr><td>Bot process not found</td><td>Crash or system restart</td><td>Restart with start command, check logs for crash reason</td></tr>
+  <tr><td><code>RequestTimeout</code> in logs</td><td>Network / geo-block issue</td><td>Expected on this network — bot retries automatically</td></tr>
+</table>
+</section>
+
+<hr>
+
+<section id="troubleshoot">
+<h2>Troubleshooting</h2>
+
+<div class="mermaid">
+flowchart TD
+    A[Problem?] --> B{Bot won't start}
+    A --> C{No trades opening}
+    A --> D{API not responding}
+    A --> E{Backtest fails}
+
+    B --> B1{Error message?}
+    B1 -->|RequestTimeout| B2[Normal on this network.<br/>Spot-only config handles it.<br/>Check config_local.json has<br/>fetchMarkets: spot]
+    B1 -->|Port 8080 in use| B3[pkill -f 'freqtrade trade'<br/>then restart]
+    B1 -->|Strategy not found| B4[Check --strategy-path flag<br/>points to user_data/strategies]
+
+    C --> C1[Check bot state:<br/>curl .../api/v1/show_config]
+    C1 --> C2{state = running?}
+    C2 -->|No| C3[POST /api/v1/start]
+    C2 -->|Yes| C4[Market may not meet<br/>EMA+RSI conditions yet.<br/>Check FreqUI chart]
+
+    D --> D1[Is process running?<br/>ps aux | grep freqtrade]
+    D1 -->|No| D2[Restart the bot]
+    D1 -->|Yes| D3[Check port 8080:<br/>lsof -i :8080]
+
+    E --> E1[Is data file present?<br/>ls user_data/data/binance/]
+    E1 -->|No| E2[Run generate_data.py]
+    E1 -->|Yes| E3[Run standalone_backtest.py<br/>instead of freqtrade backtest<br/>avoids network calls]
+</div>
+
+<h3>Common Error Messages</h3>
+<table>
+  <tr><th>Error</th><th>Meaning</th><th>Fix</th></tr>
+  <tr><td><code>RequestTimeout: binance GET exchangeInfo</code></td><td>api.binance.com geo-blocked</td><td>Config already has binance.us override — restart bot</td></tr>
+  <tr><td><code>Exception in watch_ohlcv</code></td><td>WebSocket stream geo-blocked</td><td>Normal warning — REST polling takes over, no action needed</td></tr>
+  <tr><td><code>address already in use (port 8080)</code></td><td>Previous bot still running</td><td><code>pkill -f "freqtrade trade"</code> then restart</td></tr>
+  <tr><td><code>No history for BTC/USDT found</code></td><td>Data file missing</td><td><code>python3 generate_data.py</code></td></tr>
+  <tr><td><code>Strategy not found</code></td><td>Wrong strategy path</td><td>Add <code>--strategy-path user_data/strategies</code></td></tr>
+</table>
+</section>
+
+<!-- ════════════════════════ REFERENCE ════════════════════════ -->
+
+<section id="config-ref">
+<h2>Configuration Reference</h2>
+
+<p>Full annotated reference for <code>user_data/config_local.json</code>:</p>
+
+<pre><code>{
+  // ── Core trading mode ──────────────────────────────────────────
+  "dry_run": true,              // MUST stay true for paper trading
+  "dry_run_wallet": 1000,       // Simulated starting balance in USDT
+  "trading_mode": "spot",       // spot only — no futures/margin
+  "cancel_open_orders_on_exit": false,
+
+  // ── Trade sizing ───────────────────────────────────────────────
+  "max_open_trades": 1,         // Never hold more than 1 BTC position
+  "stake_currency": "USDT",     // Trade with USDT
+  "stake_amount": "unlimited",  // Use full available balance per trade
+  "tradable_balance_ratio": 0.99, // Keep 1% as buffer
+
+  // ── Timeframe ──────────────────────────────────────────────────
+  "timeframe": "1h",            // Evaluate signals every 1 hour
+
+  // ── Exchange ───────────────────────────────────────────────────
+  "exchange": {
+    "name": "binance",
+    "key": "",                  // BLANK — paper trading only
+    "secret": "",               // BLANK — paper trading only
+    "pair_whitelist": ["BTC/USDT"],
+    "ccxt_config": {
+      "options": {
+        "fetchMarkets": {"types": ["spot"]},  // Spot only — skips dapi/fapi
+        "defaultType": "spot"
+      },
+      "urls": {
+        "api": { "public": "https://api.binance.us/api/v3" }
+      }
+    }
+  },
+
+  // ── Pairlist ───────────────────────────────────────────────────
+  "pairlists": [{ "method": "StaticPairList" }],
+
+  // ── Web UI / REST API ──────────────────────────────────────────
+  "api_server": {
+    "enabled": true,
+    "listen_ip_address": "0.0.0.0",
+    "listen_port": 8080,
+    "username": "freqtrader",
+    "password": "freqtrader"    // Change this in production!
+  },
+
+  // ── Strategy location ──────────────────────────────────────────
+  "strategy": "BtcTrendStrategy",
+  "initial_state": "running"    // Auto-start on launch
+}</code></pre>
+</section>
+
+<hr>
+
+<section id="api-ref">
+<h2>REST API Quick Reference</h2>
+
+<p>All endpoints require HTTP Basic Auth: <code>freqtrader:freqtrader</code></p>
+
+<pre><code>BASE=http://localhost:8080/api/v1
+AUTH=freqtrader:freqtrader
+
+# Health check
+curl -u $AUTH $BASE/ping
+
+# Full bot config
+curl -u $AUTH $BASE/show_config
+
+# Paper wallet balance
+curl -u $AUTH $BASE/balance
+
+# Open trades
+curl -u $AUTH $BASE/status
+
+# Profit summary
+curl -u $AUTH $BASE/profit
+
+# Trade history (last 20)
+curl -u $AUTH "$BASE/trades?limit=20"
+
+# Daily profit breakdown
+curl -u $AUTH $BASE/daily
+
+# Performance stats
+curl -u $AUTH $BASE/performance
+
+# Force a buy (override signals)
+curl -u $AUTH -X POST $BASE/forcebuy \
+  -H "Content-Type: application/json" \
+  -d '{"pair": "BTC/USDT"}'
+
+# Force close all open trades
+curl -u $AUTH -X POST $BASE/forcesell \
+  -H "Content-Type: application/json" \
+  -d '{"tradeid": "all"}'
+
+# Stop the bot (keeps process, pauses trading)
+curl -u $AUTH -X POST $BASE/stop
+
+# Resume trading
+curl -u $AUTH -X POST $BASE/start</code></pre>
+</section>
+
+<hr>
+
+<section id="docker">
+<h2>Docker Deployment</h2>
+
+<p>When you install <a href="https://docs.docker.com/desktop/install/mac-install/" target="_blank">Docker Desktop for macOS</a>, the full Docker path is available:</p>
+
+<div class="mermaid">
+flowchart LR
+    A[docker compose pull] --> B[Download freqtradeorg/freqtrade:stable]
+    B --> C[docker compose run --rm<br/>freqtrade download-data]
+    C --> D[docker compose run --rm<br/>freqtrade backtesting]
+    D --> E[docker compose up -d]
+    E --> F[Bot running in container<br/>user_data bind-mounted to host]
+    F --> G[http://localhost:8080<br/>FreqUI available]
+</div>
+
+<pre><code># Step 1 — pull the image
+docker compose pull
+
+# Step 2 — download live data (needs Binance access or VPN)
+docker compose run --rm freqtrade download-data \
+  --config /freqtrade/user_data/config.json \
+  --pairs BTC/USDT --timeframe 1h --days 180
+
+# Step 3 — run backtest inside container
+docker compose run --rm freqtrade backtesting \
+  --config /freqtrade/user_data/config.json \
+  --strategy BtcTrendStrategy \
+  --export trades
+
+# Step 4 — launch live paper trading bot
+docker compose up -d
+
+# Step 5 — stream logs
+docker compose logs -f
+
+# Step 6 — stop
+docker compose down</code></pre>
+
+<h3>Why Docker Over Native?</h3>
+<table>
+  <tr><th>Aspect</th><th>Native (conda)</th><th>Docker</th></tr>
+  <tr><td>Setup time</td><td>Faster (already done)</td><td>Requires Docker Desktop</td></tr>
+  <tr><td>Isolation</td><td>Shared Python env</td><td>✓ Fully isolated container</td></tr>
+  <tr><td>Reproducibility</td><td>Depends on conda env</td><td>✓ Exact image version pinned</td></tr>
+  <tr><td>Auto-restart</td><td>Manual</td><td>✓ <code>restart: unless-stopped</code></td></tr>
+  <tr><td>Memory limits</td><td>Uncapped</td><td>✓ 512MB limit in compose file</td></tr>
+  <tr><td>Recommended for</td><td>Development / testing</td><td>Long-running deployment</td></tr>
+</table>
+</section>
+
+<hr>
+
+<p style="color:var(--muted);font-size:12px;margin-top:32px;">
+  Freqtrade BTC/USDT Paper Trading Bot · v2026.7 · Python 3.11 · Strategy: BtcTrendStrategy<br>
+  <strong style="color:var(--red)">PAPER TRADING ONLY — No real funds at risk.</strong>
+</p>
+
+</main>
+</div>
+
+<script>
+// Highlight active sidebar link on scroll
+const headings = document.querySelectorAll('section[id]');
+const links = document.querySelectorAll('.sidebar a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const a = document.querySelector(`.sidebar a[href="#${e.target.id}"]`);
+      if (a) a.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+headings.forEach(h => observer.observe(h));
+</script>
+</body>
+</html>

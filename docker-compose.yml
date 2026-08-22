@@ -1,0 +1,55 @@
+# =============================================================================
+# Freqtrade Docker Compose — BTC/USDT Paper Trading Bot
+# =============================================================================
+# SAFETY: dry_run=true is enforced inside user_data/config.json.
+#         NO real funds will ever be used.
+#
+# Usage:
+#   docker compose up -d          # Start bot in background
+#   docker compose logs -f        # Stream live logs
+#   docker compose down           # Stop bot
+#
+# Web UI (FreqUI): http://localhost:8080
+# =============================================================================
+
+services:
+  freqtrade:
+    image: freqtradeorg/freqtrade:stable
+    container_name: freqtrade_btc_bot
+    restart: unless-stopped
+
+    # -------------------------------------------------------------------------
+    # Port mapping: host 8080 → container 8080 (Freqtrade REST API + Web UI)
+    # -------------------------------------------------------------------------
+    ports:
+      - "8080:8080"
+
+    # -------------------------------------------------------------------------
+    # Volume mapping: project user_data → container /freqtrade/user_data
+    # -------------------------------------------------------------------------
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+
+    # -------------------------------------------------------------------------
+    # Command: run the bot with our config and strategy
+    # -------------------------------------------------------------------------
+    command: >
+      trade
+      --logfile /freqtrade/user_data/logs/freqtrade.log
+      --config /freqtrade/user_data/config.json
+      --strategy BtcTrendStrategy
+
+    # -------------------------------------------------------------------------
+    # Resource limits (sensible defaults for a single-pair paper bot)
+    # -------------------------------------------------------------------------
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+
+# =============================================================================
+# Named volume note: we use a bind-mount (./user_data) so all backtest results,
+# logs, and downloaded data persist on the host filesystem.
+# =============================================================================
