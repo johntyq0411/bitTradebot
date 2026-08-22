@@ -1,47 +1,64 @@
 # =============================================================================
-# Freqtrade Docker Compose — BTC/USDT Paper Trading Bot
+# Freqtrade Docker Compose — BTC/USDT Multi-Factor Paper Trading Bot
 # =============================================================================
 # SAFETY: dry_run=true is enforced inside user_data/config.json.
-#         NO real funds will ever be used.
+#         NO real funds will ever be used in this configuration.
+#
+# Architecture:
+#   freqtrade   — main trading bot (REST API on :8080)
+#   factor_cron — sidecar that refreshes market regime data every hour
 #
 # Usage:
-#   docker compose up -d          # Start bot in background
-#   docker compose logs -f        # Stream live logs
-#   docker compose down           # Stop bot
+#   docker compose up -d          # Start all services
+#   docker compose logs -f        # Stream all logs
+#   docker compose logs -f freqtrade        # Stream bot logs only
+#   docker compose logs -f factor_cron     # Stream factor collector logs
+#   docker compose down           # Stop all services
 #
 # Web UI (FreqUI): http://localhost:8080
+# Credentials: set in .env (FREQUI_USERNAME / FREQUI_PASSWORD)
 # =============================================================================
 
 services:
+
+  # ---------------------------------------------------------------------------
+  # Main Freqtrade Bot
+  # ---------------------------------------------------------------------------
   freqtrade:
     image: freqtradeorg/freqtrade:stable
     container_name: freqtrade_btc_bot
     restart: unless-stopped
+    depends_on:
+      factor_cron:
+        condition: service_started
 
-    # -------------------------------------------------------------------------
-    # Port mapping: host 8080 → container 8080 (Freqtrade REST API + Web UI)
-    # -------------------------------------------------------------------------
     ports:
       - "8080:8080"
 
-    # -------------------------------------------------------------------------
-    # Volume mapping: project user_data → container /freqtrade/user_data
-    # -------------------------------------------------------------------------
     volumes:
       - "./user_data:/freqtrade/user_data"
 
-    # -------------------------------------------------------------------------
-    # Command: run the bot with our config and strategy
-    # -------------------------------------------------------------------------
+    env_file:
+      - .env
+
+    environment:
+      # Pass factor data dir so Docker-mounted path resolves correctly
+      - FACTOR_DATA_DIR=/freqtrade/user_data/data/external
+
     command: >
       trade
       --logfile /freqtrade/user_data/logs/freqtrade.log
       --config /freqtrade/user_data/config.json
-      --strategy BtcTrendStrategy
+      --strategy MultiFactorBtcStrategy
 
-    # -------------------------------------------------------------------------
-    # Resource limits (sensible defaults for a single-pair paper bot)
-    # -------------------------------------------------------------------------
+    # Health check: ping the REST API every 60s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-u", "freqtrader:${FREQUI_PASSWORD:-freqtrader}", "http://localhost:8080/api/v1/ping"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
     deploy:
       resources:
         limits:
@@ -49,7 +66,47 @@ services:
         reservations:
           memory: 128M
 
+  # ---------------------------------------------------------------------------
+  # Factor Collector Sidecar
+  # Runs factor_collector.py every hour to refresh market_regime*.json files.
+  # Uses a lightweight Python image — no Freqtrade overhead needed.
+  # ---------------------------------------------------------------------------
+  factor_cron:
+    image: python:3.11-slim
+    container_name: freqtrade_factor_cron
+    restart: unless-stopped
+
+    volumes:
+      - "./user_data:/freqtrade/user_data"
+
+    env_file:
+      - .env
+
+    environment:
+      - FACTOR_DATA_DIR=/freqtrade/user_data/data/external
+
+    # Install requests-capable urllib (built-in) and loop hourly
+    command: >
+      sh -c "
+        pip install --quiet --no-cache-dir requests &&
+        echo 'Factor collector sidecar started. Running every 3600s.' &&
+        while true; do
+          python3 /freqtrade/user_data/scripts/factor_collector.py;
+          echo 'Next run in 3600s...';
+          sleep 3600;
+        done
+      "
+
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 32M
+
 # =============================================================================
-# Named volume note: we use a bind-mount (./user_data) so all backtest results,
-# logs, and downloaded data persist on the host filesystem.
+# Named volume note: we use bind-mounts (./user_data) so all logs, backtest
+# results, and downloaded data persist on the host filesystem.
+# Both services share the same /freqtrade/user_data mount so factor_cron
+# can write directly to where freqtrade reads market_regime_history.json.
 # =============================================================================

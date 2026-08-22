@@ -7,6 +7,17 @@ user_data/backtest_results/*.json
 user_data/backtest_results/*.pkl
 user_data/data/
 
+# ── Freqtrade live database (contains trade history, never commit) ──────────
+tradesv3.dryrun.sqlite
+tradesv3.dryrun.sqlite-shm
+tradesv3.dryrun.sqlite-wal
+tradesv3.sqlite
+tradesv3.sqlite-shm
+tradesv3.sqlite-wal
+
+# ── Live config (contains API keys — only example is safe to commit) ────────
+user_data/config.json
+
 # ── Python ─────────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
@@ -36,7 +47,12 @@ user_data/config_local.json
 *.swo
 *~
 
-# ── Secrets (safety net — though config.json already has blank keys) ───────
-*.env
-.env*
+# ── Secrets & environment files ─────────────────────────────────────────────
+.env
+.env.*
+!.env.example
 secrets.json
+
+# ── Monitor logs ─────────────────────────────────────────────────────────────
+monitor.log
+nohup.out
