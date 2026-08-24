@@ -35,6 +35,10 @@ BOT_NAME="MultiFactorBtcBot"
 MISS_COUNT=0
 MAX_MISS=2  # consecutive missed heartbeats before alert
 
+HERMES_WHATSAPP="${HERMES_WHATSAPP:-false}"   # "true" to also send alerts via WhatsApp
+WHATSAPP_RECIPIENT="${WHATSAPP_RECIPIENT:-}"    # phone number WITHOUT + (e.g. 60178257407)
+WHATSAPP_SEND_CMD="${WHATSAPP_SEND_CMD:-hermes send --to whatsapp}"
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 log() {
@@ -70,12 +74,41 @@ EOF
         "$DISCORD_WEBHOOK" && log "[DISCORD] Alert sent: $title" || log "[DISCORD] Failed to send alert"
 }
 
-# Call Freqtrade REST API
+# Send a WhatsApp message via the Hermes CLI (uses the already-paired Baileys session).
+# Only sends if HERMES_WHATSAPP=true AND WHATSAPP_RECIPIENT is set AND the send command exists.
+whatsapp_alert() {
+    local title="$1"
+    local message="$2"
+
+    if [[ "$HERMES_WHATSAPP" != "true" || -z "$WHATSAPP_RECIPIENT" ]]; then
+        return
+    fi
+    if ! command -v "${WHATSAPP_SEND_CMD%% *}" &>/dev/null; then
+        log "[WHATSAPP] hermes CLI not on PATH — WhatsApp alerts suppressed"
+        return
+    fi
+
+    local full_msg="🤖 ${BOT_NAME}: ${title}\n\n${message}"
+    $WHATSAPP_SEND_CMD "MEDIA:none ${full_msg}" \
+        --to "$WHATSAPP_RECIPIENT" >/dev/null 2>&1 && \
+        log "[WHATSAPP] Alert sent: $title" || \
+        log "[WHATSAPP] Failed to send alert: $title"
+}
+
+# Call Freqtrade REST API with one retry on transient failure.
 ft_api() {
     local endpoint="$1"
-    curl -s --max-time 10 \
+    local response
+    response=$(curl -s --max-time 10 \
         -u "${FREQUI_USER}:${FREQUI_PASS}" \
-        "${FREQTRADE_URL}/api/v1/${endpoint}" 2>/dev/null
+        "${FREQTRADE_URL}/api/v1/${endpoint}" 2>/dev/null) || true
+    if [[ -z "$response" ]]; then
+        # One retry — transient blip shouldn't count as a miss.
+        response=$(curl -s --max-time 10 \
+            -u "${FREQUI_USER}:${FREQUI_PASS}" \
+            "${FREQTRADE_URL}/api/v1/${endpoint}" 2>/dev/null) || true
+    fi
+    echo "$response"
 }
 
 # ── Startup check ─────────────────────────────────────────────────────────────
@@ -111,6 +144,11 @@ while true; do
                 "⚠️ Bot Unreachable" \
                 "No response from \`${FREQTRADE_URL}\` for $((MISS_COUNT * CHECK_INTERVAL / 60)) minutes.\nCheck if the Docker container is running.\n\`\`\`bash\ndocker compose ps\ndocker compose logs --tail 50 freqtrade\`\`\`" \
                 "16711680"
+            if [[ -n "${HERMES_WHATSAPP:+x}" && -n "${WHATSAPP_RECIPIENT:-}" ]]; then
+                whatsapp_alert \
+                    "⚠️ Bot Unreachable" \
+                    "No response from ${FREQTRADE_URL} for $((MISS_COUNT * CHECK_INTERVAL / 60)) min. Check: docker compose ps"
+            fi
             MISS_COUNT=0  # Reset after alert to avoid spam
         fi
         sleep "$CHECK_INTERVAL"
@@ -118,8 +156,14 @@ while true; do
     fi
 
     # 2. Open trade drawdown check
-    status_response=$(ft_api "status" || echo "[]")
-    if echo "$status_response" | jq -e 'type == "array" and length > 0' &>/dev/null; then
+    status_response=$(ft_api "status" || echo "{}")
+    trades_json="[]"
+    if echo "$status_response" | jq -e '.trades' &>/dev/null; then
+        trades_json=$(echo "$status_response" | jq -c '.trades // []')
+    elif echo "$status_response" | jq -e 'type == "array"' &>/dev/null; then
+        trades_json="$status_response"
+    fi
+    if echo "$trades_json" | jq -e 'length > 0' &>/dev/null; then
         while IFS= read -r trade; do
             pair=$(echo "$trade" | jq -r '.pair')
             profit_pct=$(echo "$trade" | jq -r '.profit_pct')
@@ -134,10 +178,15 @@ while true; do
                     "📉 Drawdown Alert: ${pair}" \
                     "Open trade is in significant drawdown.\n\n**Pair:** \`${pair}\`\n**P/L:** \`${profit_pct}%\`\n**Open Rate:** \`${open_rate}\`\n**Current Rate:** \`${current_rate}\`\n\nMonitor and consider manual intervention if the stop hasn't triggered." \
                     "16744272"  # Orange
+                if [[ -n "${HERMES_WHATSAPP:+x}" && -n "${WHATSAPP_RECIPIENT:-}" ]]; then
+                    whatsapp_alert \
+                        "📉 Drawdown: ${pair}" \
+                        "P/L: ${profit_pct}% | Open: ${open_rate} | Current: ${current_rate}"
+                fi
             else
                 log "[OK] ${pair}: ${profit_pct}% (within threshold)"
             fi
-        done < <(echo "$status_response" | jq -c '.[]')
+        done < <(echo "$trades_json" | jq -c '.[]')
     else
         log "[INFO] No open trades"
     fi
@@ -158,13 +207,13 @@ while true; do
         fi
     fi
 
-    # 4. Daily profit summary (emit every 12 checks ≈ once per hour at 5min interval)
-    profit_response=$(ft_api "profit" || echo "{}")
-    if echo "$profit_response" | jq -e '.profit_all_percent' &>/dev/null; then
-        profit_all=$(echo "$profit_response" | jq -r '.profit_all_percent')
-        trade_count=$(echo "$profit_response" | jq -r '.trade_count // 0')
-        win_rate=$(echo "$profit_response" | jq -r '.winning_trades // 0')
-        log "[PROFIT] Total P/L: ${profit_all}% across ${trade_count} trades (${win_rate} wins)"
+    # 4. Daily profit summary (fetch closed-trades summary from the /api/v1/trades endpoint)
+    trades_history=$(ft_api "trades" || echo "[]")
+    trade_count=$(echo "$trades_history" | jq -r '. | length // 0')
+    if [[ "$trade_count" -gt 0 ]]; then
+        profit_sum=$(echo "$trades_history" | jq '[.[] | .profit_abs] | add // 0')
+        # Profit % is usually computed relative to stake; log absolute P/L from the trades list.
+        log "[PROFIT] ${trade_count} total trades; sum profit_abs = ${profit_sum} USDT"
     fi
 
     log "--- Next check in ${CHECK_INTERVAL}s ---"

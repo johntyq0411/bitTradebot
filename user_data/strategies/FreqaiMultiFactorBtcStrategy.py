@@ -29,21 +29,42 @@ class FreqaiMultiFactorBtcStrategy(IStrategy):
     def feature_engineering_expand_all(self, dataframe: DataFrame, period: int, metadata: dict, **kwargs) -> DataFrame:
         """
         Create the features the AI will use to predict the future.
+        Called once per period in indicator_periods_candles — include the
+        period value in each feature name so multi-period features stack.
         """
-        dataframe[f'%-rsi-period'] = dataframe['close'].rolling(period).apply(lambda x: x.mean())
-        dataframe[f'%-roc-period'] = dataframe['close'].pct_change(period)
-        dataframe[f'%-volume-mean-period'] = dataframe['volume'].rolling(period).mean()
+        # Proper RSI (Wilder-style smoothing via ewm)
+        delta = dataframe['close'].diff()
+        gain = delta.clip(lower=0)
+        loss = -delta.clip(upper=0)
+        avg_gain = gain.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
+        avg_loss = loss.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
+        rs = avg_gain / avg_loss.replace(0, float('inf'))
+        dataframe[f'%-rsi-{period}'] = 100 - (100 / (1 + rs))
+
+        dataframe[f'%-roc-{period}'] = dataframe['close'].pct_change(period)
+        dataframe[f'%-volume-mean-{period}'] = dataframe['volume'].rolling(period).mean()
         return dataframe
 
     def feature_engineering_expand_basic(self, dataframe: DataFrame, metadata: dict, **kwargs) -> DataFrame:
         """
         Add external factors as features.
+        Reads market_regime_history.json produced by factor_collector.py.
+        Warns if the file is older than 48h — stale macro data silently
+        degrades the model's signal and is worse than no macro data.
         """
         user_data_dir = Path(self.config.get('user_data_dir', 'user_data'))
         hist_path = user_data_dir / 'data/external/market_regime_history.json'
 
         if hist_path.exists():
             try:
+                hist_stat = hist_path.stat()
+                age_hours = (datetime.now(timezone.utc).timestamp() - hist_stat.st_mtime) / 3600
+                if age_hours > 48:
+                    logger.warning(
+                        f"market_regime_history.json is {age_hours:.0f}h old — "
+                        f"macro features will use stale/fill values. "
+                        f"Ensure factor_collector.py is running or refresh the file."
+                    )
                 with open(hist_path, 'r') as f:
                     hist_data = json.load(f)
                 hist_df = pd.DataFrame(hist_data)
@@ -51,7 +72,7 @@ class FreqaiMultiFactorBtcStrategy(IStrategy):
                     hist_df['date_key'] = pd.to_datetime(hist_df['date']).dt.date
                     dataframe['date_key'] = dataframe['date'].dt.date
                     merged = pd.merge(dataframe, hist_df, on='date_key', how='left')
-                    
+
                     dataframe['%-fear_and_greed'] = merged['fear_and_greed'].fillna(50).values
                     dataframe['%-funding_rate'] = merged['funding_rate'].fillna(0.0001).values
                     dataframe['%-open_interest'] = merged['open_interest'].fillna(0).values
@@ -62,7 +83,7 @@ class FreqaiMultiFactorBtcStrategy(IStrategy):
                     dataframe.drop(columns=['date_key'], inplace=True, errors='ignore')
             except Exception as e:
                 logger.warning(f"Failed to load external factors: {e}")
-        
+
         return dataframe
 
     def feature_engineering_standardizes(self, dataframe: DataFrame, metadata: dict, **kwargs) -> DataFrame:
