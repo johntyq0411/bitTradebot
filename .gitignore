@@ -56,3 +56,5 @@ secrets.json
 # ── Monitor logs ─────────────────────────────────────────────────────────────
 monitor.log
 nohup.out
+user_data/models/
+user_data/backtest_results/*.zip

@@ -1,6 +1,6 @@
 ---
 name: multifactor_trading
-description: Guidelines for implementing Multi-Factor Trading (Macro, Micro, and Technical Analysis) in Freqtrade bots, including the full Antigravity→Cursor→GitHub→VPS deployment lifecycle.
+description: Guidelines for implementing Multi-Factor Trading (Macro, Micro, and Technical Analysis) in Freqtrade bots, including the full Antigravity→VS Code (Cline)→GitHub→VPS deployment lifecycle.
 ---
 
 # Multi-Factor Trading Architecture
@@ -67,10 +67,10 @@ A sidecar script (`user_data/scripts/factor_collector.py`) must:
 * Deliverables: `docker-compose.yml`, `config.json` (dry_run=true), `factor_collector.py`, strategy skeleton, initial data download.
 * Model: Use a deep-reasoning model (Claude Sonnet Thinking) for quantitative design decisions.
 
-### Phase 2 — Precision Engineering (Cursor IDE)
+### Phase 2 — Precision Engineering (VS Code + Cline)
 * Role: Quantitative Developer
 * Deliverables: Fine-tuned indicators, verified pullback logic diffs, ATR stop multiplier tuning.
-* All code changes must be reviewed as a line-by-line diff before applying.
+* All code changes must be handled by the Cline extension inside VS Code and reviewed as a line-by-line diff before applying.
 
 ### Phase 3 — Version Control (GitHub)
 * Repository branches: `staging` (paper trade) → `prod` (live).

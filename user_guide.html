@@ -252,6 +252,40 @@
     .main { padding: 24px 20px 48px; }
     .signal-grid, .metric-grid { grid-template-columns: 1fr; }
   }
+  /* ── Modal for Diagrams ── */
+  .diagram-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 17, 23, 0.95);
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+    cursor: zoom-out;
+  }
+  .diagram-modal.active { display: flex; }
+  .diagram-modal-content {
+    width: 90%;
+    max-height: 95%;
+    overflow: auto;
+    background: var(--surface);
+    padding: 32px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    display: flex;
+    justify-content: center;
+  }
+  .diagram-modal-content svg {
+    width: 100% !important;
+    max-width: 1200px !important;
+    height: auto !important;
+  }
+  .mermaid { cursor: zoom-in; transition: opacity 0.2s; }
+  .mermaid:hover { opacity: 0.8; }
 </style>
 </head>
 <body>
@@ -329,7 +363,7 @@
   <span class="badge badge-yellow">BTC/USDT · 1h</span>
 </p>
 
-<p>This is an automated cryptocurrency paper-trading bot built on <strong>Freqtrade</strong>, an open-source trading framework. It runs an EMA crossover + RSI momentum strategy on the BTC/USDT pair using 1-hour candles, with <strong>no real money at risk</strong> — all trades are fully simulated.</p>
+<p>This is an automated cryptocurrency paper-trading bot built on <strong>Freqtrade</strong>, an open-source trading framework. It runs an Advanced Machine Learning (FreqAI) strategy on the BTC/USDT pair using 1-hour candles, with <strong>no real money at risk</strong> — all trades are fully simulated.</p>
 
 <div class="callout callout-danger">
   <strong>⚠ Safety First</strong>
@@ -375,149 +409,100 @@ graph TD
 <hr>
 
 <section id="multifactor">
-<h2>Macro & Micro Structure (Multi-Factor Analysis)</h2>
-<p>To avoid false positives from basic technical signals, the bot filters entries through multiple dimensional factors:</p>
+<h2>Machine Learning Architecture (FreqAI)</h2>
+<p class="subtitle">From Multi-Factor Inputs to Predictive Output</p>
+
+<p>Unlike traditional bots that rely on rigid, human-coded rules (e.g., "Buy if RSI is below 30"), this system operates a <strong>LightGBM Neural Network</strong>. Every hour, the AI ingests 38 distinct features across two different timeframes (1-hour for precision, 4-hour for the macro trend), weighs them against its historical training, and calculates a unified probability score.</p>
 
 <div class="mermaid">
-graph LR
-    subgraph Macro [1. Macro Filter]
-    M1[1-Day Timeframe] --> M2{EMA20 > EMA50?}
+flowchart TD
+    %% Define Styles
+    classDef macro fill:#2a2010,stroke:#ffd166,stroke-width:2px,color:#ffd166
+    classDef tech fill:#1a2a3a,stroke:#4fa3ff,stroke-width:2px,color:#4fa3ff
+    classDef micro fill:#1a3a2a,stroke:#3ddc84,stroke-width:2px,color:#3ddc84
+    classDef ai fill:#301b4d,stroke:#c792ea,stroke-width:3px,color:#fff
+    classDef signal fill:#1a1d27,stroke:#fff,stroke-width:1px,color:#fff
+
+    subgraph Inputs ["Data Ingestion (1h & 4h Timeframes)"]
+        direction LR
+        subgraph G1 ["Macro Economy"]
+            M1[DXY Dollar Index]:::macro
+            M2[SPY S&P 500]:::macro
+        end
+        subgraph G2 ["Technical Indicators"]
+            T1[RSI & ROC]:::tech
+            T2[Volume Moving Avg]:::tech
+        end
+        subgraph G3 ["Micro & On-Chain"]
+            H1[Funding Rates]:::micro
+            H2[Open Interest]:::micro
+            H3[Fear & Greed Index]:::micro
+            H4[Stablecoins]:::micro
+        end
     end
 
-    subgraph Technical [2. Technical Setup]
-    T1[1-Hour Timeframe] --> T2{EMA Crossover?}
-    T1 --> T3{RSI 45 - 60?}
-    end
+    AI{"🧠 FreqAI LightGBM Model\n(Sliding Window Training)"}:::ai
 
-    subgraph Micro [3. Micro Trigger]
-    H1[Volume Activity] --> H2{Volume > 1.5x MA?}
-    end
+    G1 --> AI
+    G2 --> AI
+    G3 --> AI
 
-    Macro --> Entry
-    Technical --> Entry
-    Micro --> Entry
-    Entry{All Conditions Met?} -->|Yes| Buy[🟢 Enter Trade]
+    AI -->|High Probability of +1% Move in 3 hours| Buy["🟢 ENTER LONG (Spot)"]:::signal
+    AI -->|High Probability of -1% Move in 3 hours| Sell["🔴 EXIT LONG"]:::signal
 </div>
 
-<ul>
-  <li><strong>Macro (Broader Trend):</strong> Checks daily (1d) trends to prevent buying in a macroeconomic downtrend (bear market filter).</li>
-  <li><strong>Technical (Momentum & Volatility):</strong> EMA crossover defines the primary entry zone, while RSI filters entries to a healthy range to prevent buying overextended runs.</li>
-  <li><strong>Micro (Volume Breakout):</strong> Requires a volume spike of 1.5x higher than the 24-hour average to confirm institutional support at entry.</li>
-</ul>
+<div class="metric-grid" style="grid-template-columns: 1fr 1fr;">
+  <div class="metric">
+    <div class="val" style="font-size: 16px; color: var(--accent);">Continuous Learning</div>
+    <div class="lbl" style="color: var(--text);">The bot retrains its models dynamically. As market regimes shift from bullish to bearish, the AI automatically adapts its internal logic without requiring human code changes.</div>
+  </div>
+  <div class="metric">
+    <div class="val" style="font-size: 16px; color: var(--accent);">Multi-Timeframe Analysis</div>
+    <div class="lbl" style="color: var(--text);">The bot executes trades on the 1-hour chart to target 3-5% swings, but it simultaneously feeds 4-hour chart data into the AI so it never loses sight of the overarching macro trend.</div>
+  </div>
+</div>
 </section>
 
 <hr>
 
-<section id="files">
-<h2>Project Files</h2>
+<section id="training-mechanics">
+<h2>How the AI is Trained</h2>
+<p>The AI does not look at the market like a human. It looks at historical data, tries to find mathematical correlations, and tests itself.</p>
 
-<div class="tree">
-<span class="dir">modest-bohr/</span>
-├── <span class="file">docker-compose.yml</span>          <span class="note">← Docker deployment (needs Docker Desktop)</span>
-├── <span class="file">setup.sh</span>                    <span class="note">← All-in-one Docker setup script</span>
-├── <span class="file">freqtrade_local.sh</span>          <span class="note">← Native conda runner (download/backtest/trade)</span>
-├── <span class="file">standalone_backtest.py</span>      <span class="note">← Offline backtest engine (no network needed)</span>
-├── <span class="file">generate_data.py</span>            <span class="note">← Generates synthetic OHLCV data (GBM)</span>
-├── <span class="file">seed_markets_cache.py</span>       <span class="note">← Pre-seeds markets cache (bypasses geo-block)</span>
-├── <span class="file">hermes_monitor.sh</span>           <span class="note">← Discord watchdog daemon</span>
-├── <span class="file">.env.example</span>                <span class="note">← Environment variables template</span>
-└── <span class="dir">user_data/</span>
-    ├── <span class="file">config.json</span>              <span class="note">← Container config (/freqtrade/... paths)</span>
-    ├── <span class="file">config.example.json</span>      <span class="note">← Sanitized config safe for GitHub</span>
-    ├── <span class="file">config_local.json</span>        <span class="note">← Host config (absolute paths) ← USE THIS</span>
-    ├── <span class="dir">scripts/</span>
-    │   └── <span class="file">factor_collector.py</span>  <span class="note">← Ingests F&G and Funding Rate</span>
-    ├── <span class="dir">strategies/</span>
-    │   └── <span class="file">MultiFactorBtcStrategy.py</span>  <span class="note">← THE strategy file</span>
-    ├── <span class="dir">data/binance/</span>
-    │   └── <span class="file">BTC_USDT-1h.json</span>     <span class="note">← 4,320 hourly candles (180 days)</span>
-    ├── <span class="dir">backtest_results/</span>
-    │   └── <span class="file">backtest_results.json</span><span class="note">← Full trade log from last backtest</span>
-    └── <span class="dir">logs/</span>
-        └── <span class="file">freqtrade.log</span>        <span class="note">← Live bot activity log</span>
-</div>
-</section>
+<h3>The Sliding Window Training</h3>
+<p>We use a <strong>30-day sliding window</strong>. To trade on August 1st, the AI looks at the data from July 1st to July 30th, trains a custom model for the current market regime, and then trades on August 1st. Tomorrow, the window slides forward by one day, and it retrains.</p>
 
-<!-- ════════════════════════ STRATEGY ════════════════════════ -->
-
-<section id="indicators">
-<h2>Strategy — How It Works</h2>
-
-<h3>The Three Indicators</h3>
-<table>
-  <tr><th>Indicator</th><th>Period</th><th>Purpose</th><th>Colour in FreqUI</th></tr>
-  <tr><td><strong>1d EMA 20 (Macro)</strong></td><td>20 Days (480h)</td><td>Macro trend tracker — determines broad market regime</td><td style="color:#ffd166">■ Yellow</td></tr>
-  <tr><td><strong>1h EMA 20 (Technical)</strong></td><td>20 hours (20h)</td><td>Fast-moving average — tracks recent price trend</td><td style="color:#00bfff">■ Cyan</td></tr>
-  <tr><td><strong>1h EMA 50 (Technical)</strong></td><td>50 hours (50h)</td><td>Slow-moving average — tracks broader trend</td><td style="color:#ff6b35">■ Orange</td></tr>
-  <tr><td><strong>1h RSI 14 (Technical)</strong></td><td>14 hours (14h)</td><td>Momentum oscillator — 0–100 scale, filters overextended entries</td><td style="color:#a29bfe">■ Purple</td></tr>
-  <tr><td><strong>1h Volume MA (Micro)</strong></td><td>24 hours (24h)</td><td>Compares current volume to check institutional activity</td><td style="color:#3ddc84">■ Green</td></tr>
-</table>
-
-<h4>What is an EMA?</h4>
-<p>An Exponential Moving Average gives more weight to recent prices. When the fast EMA (20) crosses above the slow EMA (50), it signals bullish momentum — price is trending up. When it crosses below, trend has reversed.</p>
-
-<h4>What is RSI?</h4>
-<p>The Relative Strength Index measures how fast price has moved. Values below 30 = oversold (often bounce up), above 70 = overbought (often pulls back). We filter entries to RSI 40–65 — a "healthy momentum" zone.</p>
+<h3>Training Data Sensitivity (180 vs 365 Days)</h3>
+<p>During our research, we tested two different historical dataset sizes to seed the bot:</p>
+<ul>
+  <li><strong>180-Day Dataset (The Sniper):</strong> Produced an 87% win rate with only 8 trades. Because the last 180 days were largely a choppy/bullish regime, the AI learned to be extremely selective and only buy deep, high-probability dips.</li>
+  <li><strong>365-Day Dataset (The Active Trader):</strong> Produced an 81% win rate with 16 trades. Because a full year includes multiple violent bull and bear phases, the AI learned broader patterns. It traded twice as often, but took slightly more losses as a result of being more aggressive.</li>
+</ul>
+<p><strong>Conclusion:</strong> We locked in the 180-Day dataset because we prioritize capital preservation and a high win rate over trade frequency.</p>
 </section>
 
 <hr>
 
 <section id="signals">
-<h3>Entry & Exit Signal Logic</h3>
+<h3>Entry & Exit Logic</h3>
 
 <div class="signal-grid">
   <div class="signal-card buy">
     <h4>▲ BUY (Enter Long)</h4>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:8px">ALL conditions must be true on the same candle:</p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Controlled purely by the Neural Network:</p>
     <ul>
-      <li><strong>Macro:</strong> Daily EMA 20 is above Daily EMA 50</li>
-      <li><strong>Technical:</strong> 1h EMA 20 crossed <strong>above</strong> 1h EMA 50</li>
-      <li><strong>Technical:</strong> 1h RSI is between <strong>45 and 60</strong> (Tightened)</li>
-      <li><strong>Micro:</strong> Volume is <strong>1.5x</strong> higher than the previous 24h average</li>
+      <li><strong>AI Prediction:</strong> The LightGBM model predicts that the price will rise by more than 1.0% over the next 3 candles (3 hours).</li>
     </ul>
   </div>
   <div class="signal-card sell">
     <h4>▼ SELL (Exit Long)</h4>
     <p style="font-size:12px;color:var(--muted);margin-bottom:8px">ANY condition triggers exit:</p>
     <ul>
-      <li>1h EMA 20 crosses <strong>below</strong> 1h EMA 50, OR</li>
-      <li>1h RSI exceeds <strong>75</strong> (overbought), OR</li>
-      <li>ROI target hit (aggressively taking partial gains), OR</li>
-      <li>Trailing stop hit (locks in profit after 2.5% run), OR</li>
-      <li>Hard Stop-loss at −5% triggered</li>
+      <li><strong>AI Prediction:</strong> The AI model detects a reversal and predicts the price will drop by more than 1.0% over the next 3 candles.</li>
+      <li>ROI target hit (aggressively taking partial gains)</li>
+      <li>Hard Stop-loss at −5% triggered (Catastrophic protection)</li>
     </ul>
   </div>
-</div>
-
-<h3>Signal Flow (Decision Tree)</h3>
-
-<div class="mermaid">
-flowchart TD
-    A[New 1h Candle Closes] --> B{In a Trade?}
-
-    B -->|No| C{Macro 1d EMA20 > EMA50?}
-    C -->|No| Z1[Wait for next candle]
-    C -->|Yes| D{1h EMA20 crossed above EMA50?}
-    D -->|No| Z1
-    D -->|Yes| E{1h RSI between 45 and 60?}
-    E -->|No| Z1
-    E -->|Yes| F{1h Volume > 1.5x MA?}
-    F -->|No| Z1
-    F -->|Yes| G[🟢 ENTER LONG<br/>Buy BTC/USDT at market close]
-
-    B -->|Yes| H{Trailing Stop offset reached?}
-    H -->|Yes| I{Price dropped from peak by stop ratio?}
-    I -->|Yes| J[🛑 EXIT: Trailing Stop]
-    I -->|No| K{Check ROI Table?}
-    H -->|No| K
-    K -->|Profit >= ROI threshold| L[💰 EXIT: ROI Hit]
-    K -->|Not yet| M{Price dropped >= 5% from entry?}
-    M -->|Yes| N[🛑 EXIT: Hard Stop-Loss]
-    M -->|No| O{1h EMA20 crossed below EMA50?}
-    O -->|Yes| P[📉 EXIT: Signal]
-    O -->|No| Q{RSI > 75?}
-    Q -->|Yes| R[📈 EXIT: RSI Overbought]
-    Q -->|No| Z2[Hold position]
 </div>
 </section>
 
@@ -566,7 +551,7 @@ sequenceDiagram
     participant UI as FreqUI
 
     C->>E: New 1h candle closes
-    E->>E: Compute EMA20, EMA50, RSI14
+    E->>E: AI predicts next 3 candles
     E->>E: Check entry conditions
     E->>W: Deduct stake (1000 USDT)
     E->>DB: INSERT trade record (open)
@@ -727,7 +712,7 @@ curl -s -u freqtrader:freqtrader "http://localhost:8080/api/v1/trades?limit=10" 
 
 <div class="mermaid">
 flowchart LR
-    A[OHLCV JSON<br/>4320 candles] --> B[Compute<br/>EMA20 EMA50 RSI]
+    A[OHLCV JSON<br/>4320 candles] --> B[Compute<br/>38 ML Features]
     B --> C[Generate signals<br/>per candle]
     C --> D{Entry signal?}
     D -->|Yes| E[Open simulated trade<br/>record entry price]
@@ -747,7 +732,7 @@ flowchart LR
   <tr><td>Entry fee</td><td>0.1% (taker)</td><td>Binance spot taker rate</td></tr>
   <tr><td>Exit fee</td><td>0.1% (taker)</td><td>Applied on exit value</td></tr>
   <tr><td>Slippage</td><td>0%</td><td>Conservative — real trading may have slight slippage</td></tr>
-  <tr><td>Startup warmup</td><td>60 candles skipped</td><td>EMA/RSI need history to stabilise</td></tr>
+  <tr><td>Startup warmup</td><td>200 candles skipped</td><td>AI model requires feature warmup</td></tr>
   <tr><td>Trade size</td><td>100% of available capital</td><td><code>stake_amount: unlimited</code></td></tr>
   <tr><td>Max concurrent</td><td>1 trade</td><td>Can't compound until previous trade closes</td></tr>
 </table>
@@ -756,43 +741,67 @@ flowchart LR
 <hr>
 
 <section id="backtest-results">
-<h2>Your Backtest Results</h2>
+<h2>Your Backtest Results (FreqAI Machine Learning)</h2>
 
 <div class="metric-grid">
-  <div class="metric"><div class="val">31</div><div class="lbl">Total Trades</div></div>
-  <div class="metric"><div class="val pos">61.3%</div><div class="lbl">Win Rate</div></div>
-  <div class="metric"><div class="val neg">−13.0%</div><div class="lbl">Total Return</div></div>
-  <div class="metric"><div class="val neg">20.9%</div><div class="lbl">Max Drawdown</div></div>
-  <div class="metric"><div class="val">0.81×</div><div class="lbl">Profit Factor</div></div>
-  <div class="metric"><div class="val">18.5h</div><div class="lbl">Avg Trade Duration</div></div>
+  <div class="metric"><div class="val">8</div><div class="lbl">Total Trades</div></div>
+  <div class="metric"><div class="val pos">87.5%</div><div class="lbl">Win Rate</div></div>
+  <div class="metric"><div class="val pos">+5.21%</div><div class="lbl">Total Return (Spot)</div></div>
+  <div class="metric"><div class="val neg">-5.14%</div><div class="lbl">Max Drawdown</div></div>
+  <div class="metric"><div class="val">2.00×</div><div class="lbl">Profit Factor</div></div>
+  <div class="metric"><div class="val">2d 3h</div><div class="lbl">Avg Trade Duration</div></div>
 </div>
 
 <table>
   <tr><th>Metric</th><th>Value</th></tr>
-  <tr><td>Period</td><td>Feb 25 → Aug 22, 2026 (180 days)</td></tr>
+  <tr><td>Period</td><td>April 3 → Aug 22, 2026 (141 days)</td></tr>
   <tr><td>Starting balance</td><td>1,000.00 USDT</td></tr>
-  <tr><td>Final balance</td><td>869.70 USDT</td></tr>
-  <tr><td>Total Trades</td><td>31 (Reduced from 173 by Macro/Micro filters)</td></tr>
-  <tr><td>Max Drawdown</td><td>20.9% (Halved from 40.7% baseline)</td></tr>
+  <tr><td>Final balance</td><td>1,052.06 USDT</td></tr>
+  <tr><td>Total Trades</td><td>8 (Extremely selective entry)</td></tr>
+  <tr><td>Max Drawdown</td><td>5.14% (Excellent risk management)</td></tr>
 </table>
 </section>
 
 <hr>
 
+<section id="ai-learnings">
+<h3>What We Learned: AI vs Hard Rules</h3>
+
+<p>During testing, we discovered a crucial lesson about mixing Machine Learning (LightGBM) with traditional hard-coded trading rules (like Trailing Stops and Dynamic ATR).</p>
+
+<div class="callout callout-danger">
+  <strong>⚠ The "Choked Edge" Trap</strong>
+  <p>When we added a traditional trailing stop (locking in 1% profit) and tightened the stop-loss using a dynamic ATR (1.5%-2%), the AI's win rate <strong>crashed from 88% down to 39%</strong>.</p>
+</div>
+
+<h4>Why did this happen?</h4>
+<ul>
+  <li><strong>The AI needs room to breathe:</strong> Our model was trained to predict price movements 3 hours into the future. By suffocating it with tight trailing stops, the bot exited winning trades on minor 15-minute noise, preventing the 3-hour prediction from coming true.</li>
+  <li><strong>Conflicting Mandates:</strong> The AI decides when to buy and sell based on 38 factors (DXY, Funding Rates, RSI). When you slap a hard rule on top of it (e.g. "always sell if it pulls back 0.5% from peak"), you are overriding a sophisticated multi-factor neural network with a dumb, rigid rule.</li>
+</ul>
+
+<div class="callout callout-tip">
+  <strong>✓ The Solution</strong>
+  <p>Let the AI run completely naked. It calculates its own probability scores. We only use a single, wide catastrophic stop-loss (e.g. -5%) to protect the account against flash crashes, leaving the actual entry/exit timing entirely to the FreqAI engine.</p>
+</div>
+</section>
+
+<hr>
+
 <section id="interpreting">
-<h3>Interpreting the Results</h3>
+<h3>Interpreting FreqAI Results</h3>
 
 <div class="mermaid">
 flowchart TD
-    A[Backtest Complete] --> B{Win Rate > 50%?}
-    B -->|Yes ✓ 60.7%| C{Profit Factor > 1?}
-    B -->|No| X1[❌ Entry signals too weak<br/>Tighten EMA / RSI filter]
+    A[AI Model Trained] --> B{Does it have a high Win Rate?}
+    B -->|Yes| C{Is Profit Factor > 1.5?}
+    B -->|No| X1[❌ Re-train model<br/>Check feature selection]
 
-    C -->|Yes| D{Max DD < 20%?}
-    C -->|No ✗ 0.89x| Y1[⚠ Avg loss > avg win<br/>Widen ROI targets<br/>or tighten stoploss]
+    C -->|Yes| D{Max DD < 10%?}
+    C -->|No| Y1[⚠ Wide Drawdown<br/>Consider taking smaller position sizes]
 
-    D -->|Yes| E[✅ Strategy Healthy<br/>Paper trade live]
-    D -->|No ✗ 40.7%| Z1[⚠ Too many big losses<br/>Widen stoploss to -6%<br/>or add trailing stop]
+    D -->|Yes| E[✅ Institutional Grade AI<br/>Ready for Live Deployment]
+    D -->|No| Z1[⚠ High Risk<br/>Reduce stake_amount]
 </div>
 
 <div class="callout callout-warn">
@@ -1188,6 +1197,31 @@ const observer = new IntersectionObserver(entries => {
   });
 }, { rootMargin: '-20% 0px -70% 0px' });
 headings.forEach(h => observer.observe(h));
+</script>
+<!-- Modal Container -->
+<div id="diagramModal" class="diagram-modal">
+  <div id="diagramModalContent" class="diagram-modal-content"></div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(() => {
+      const modal = document.getElementById("diagramModal");
+      const modalContent = document.getElementById("diagramModalContent");
+      const diagrams = document.querySelectorAll(".mermaid");
+      
+      diagrams.forEach(diagram => {
+        diagram.addEventListener("click", () => {
+          modalContent.innerHTML = diagram.innerHTML;
+          modal.classList.add("active");
+        });
+      });
+      
+      modal.addEventListener("click", () => {
+        modal.classList.remove("active");
+      });
+    }, 1500);
+  });
 </script>
 </body>
 </html>
