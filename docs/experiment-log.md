@@ -282,6 +282,24 @@
 
 ---
 
+## NULL-ENTRY-CONTROL — the decisive falsification
+
+**Date:** 2026-08-25 · **Strategy:** `NullEntryControlStrategy.py`
+**Design:** identical exits to V2.1 (SMA50 structural + 48c time stop, no trailing), but entry = unconditional every 126 candles (zero market info).
+
+**Results:**
+- 81 trades, **+30.32%**, PF **1.51**, win 27.2%, **DD 15.1%**, Sharpe 0.80, p=0.33
+- vs V2.1 real entry: 139 trades, −2.83%, PF 0.976, DD 38.5%
+- vs buy-and-hold: +33.3%
+
+**The entry signal is WORSE than random.** Entering with zero information beat the engineered entry (regime gate + 4/6 score + higher-high) by 33 points with half the drawdown. The exits were doing all the value preservation; the entries were subtracting.
+
+**Conclusion:** the edge (if any) lives in *regime filtering + letting winners run*, NOT in entry timing. This validates the Alternative Generator's Rank 1 (regime-gated low-frequency trend) — "dumb" cadence/pullback entries inside a trend filter, wide stops, structural exits.
+
+**Next:** implement a regime-gated low-frequency strategy (macro/trend filter → simple entry → SMA structural exit + wide ATR stop), NOT another entry-signal refinement.
+
+---
+
 ## Future Experiments
 
 Format for new entries:
