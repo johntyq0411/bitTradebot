@@ -49,9 +49,7 @@ services:
       trade
       --logfile /freqtrade/user_data/logs/freqtrade.log
       --config /freqtrade/user_data/config.json
-      --config /freqtrade/user_data/config_freqai.json
-      --strategy FreqaiMultiFactorBtcStrategy
-      --freqaimodel LightGBMRegressor
+      --strategy RegimeGatedTrendSMA200Strategy
 
     # Health check: ping the REST API every 60s
     healthcheck:

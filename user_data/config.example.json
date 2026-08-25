@@ -12,8 +12,9 @@
   "trading_mode": "spot",
   "margin_mode": "",
 
-  "strategy": "MultiFactorBtcStrategy",
+  "strategy": "RegimeGatedTrendSMA200Strategy",
   "strategy_path": "/freqtrade/user_data/strategies",
+  "stoploss": -0.15,
 
   "unfilledtimeout": {
     "entry": 10,
@@ -70,7 +71,7 @@
     "password": "YOUR_FREQUI_PASSWORD"
   },
 
-  "bot_name": "MultiFactorBtcBot",
+  "bot_name": "RegimeGatedTrendBot",
   "initial_state": "running",
   "force_entry_enable": false,
   "internals": {
