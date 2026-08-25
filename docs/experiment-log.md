@@ -209,17 +209,76 @@
 
 **Trade-level (3 trades):**
 - 2026-04-13 → 04-13, horizon_stop, −0.46% (dead signal cut fast ✓)
-- 2026-04-13 → 04-21, exit_signal, **+7.43%** (8-day runner — ATR trailing let it run; ML-001 would've ROI-capped at ~+1.5%)
+- 2026-04-13 → 04-21, exit_signal, **+7.43%** (8-day runner — exited on model-signal flip, NOT the ATR trailing)
 - 2026-07-20 → 07-20, horizon_stop, +0.60%
 
 **Diagnosis (decomposition):**
-- Fixes 1+2 WORK: winner ran to +7.43%, dead signals cut at 6h, DD collapsed 32.7% → 0.45%
+- Fix 2 (horizon stop) WORKED: dead signals cut at 6h, DD collapsed 32.7% → 0.45%
+- **Fix 1 (ATR trailing) NEVER FIRED** — `self.dp.ohlcv()` returned a DataFrame unpacked as a tuple → ValueError → silent fallback to static stop. Discovered later; see ML-003/004 audit. The +7.43% winner exited via exit_signal, not trailing.
 - Fix 3 (SMA200) FAILED as designed: 39 → 3 trades, killed the profitable bear-bounce trades (Apr/Jul were ML-001's best months, all below SMA200)
 - 3 trades = statistically meaningless → iterate to ML-003
 
-**Verdict:** Keep Fixes 1+2, drop Fix 3. ML-003 = exit fixes only.
+**Verdict:** Keep horizon stop, drop Fix 3, FIX the trailing (unbeknownst). ML-003 = exit fixes only.
 
 **Artifact:** `user_data/backtest_results/backtest-result-2026-08-25_06-16-46.zip`
+
+---
+
+## WFA-1Y-ML-003 — Exit fixes only (2× ATR trailing + 6h stop, no SMA200)
+
+**Date:** 2026-08-25 · **Strategy:** `FreqaiMultiFactorBtcV3Strategy.py`
+**Config:** config_freqai_v2.json · **Window:** 2025-08-26 → 2026-08-24
+
+**Results:** 80 trades, **−31.57%**, win 41.2% (33W/47L), DD 31.75%, avg duration 11h
+**Exit reasons:** horizon_stop 75, stop_loss 3, exit_signal 2
+- Wins avg +0.74% / losses avg −1.31% (loss-cutter worked) BUT win rate halved (64%→41%) and trades doubled (39→80, ~16% fee drag).
+
+**Diagnosis:** 6h horizon stop too tight — strangled developing winners AND removed the `max_open_trades=1` slot as a natural filter (fast exits → constant re-entry on marginal signals).
+
+## WFA-1Y-ML-004 — Retuned wrapper (3× ATR, 24h stop, −3% hard stop)
+
+**Date:** 2026-08-25 · **Strategy:** `FreqaiMultiFactorBtcV4Strategy.py`
+**Results:** 44 trades, **−39.85%**, win **11.4%** (5W/39L), DD 42.3%
+**Exit reasons:** horizon_stop 24, stop_loss 15, exit_signal 5
+**Diagnosis:** 24h horizon stop strangled 24 would-be winners into losses. Confirms: any horizon-stop-on-the-model approach destroys the win side.
+
+## WFA-1Y-ML-005 — Stop-loss test (stoploss −5% → −1.5%, everything else = ML-001)
+
+**Date:** 2026-08-25 · **Strategy:** `FreqaiMultiFactorBtcV5Strategy.py`
+**Results:** 92 trades, **−31.63%**, win 37.0% (34W/58L), p=**0.024**, DD 33.3%
+**Exit reasons:** stop_loss 58, roi 34
+**Diagnosis:** The −1.5% stop **falsified the "cut losers tighter" hypothesis.** 64%→37% win rate = whipsaw: 1h BTC dips >1.5% inside noise before the predicted move plays out. Also doubled trade count (39→92) → ~18.4% fee drag. Statistically significant (p=0.024) but *negative*.
+
+## WFA-1Y-ML-006a/006b — Target-horizon test (12h & 24h)
+
+**Date:** 2026-08-25 · **Strategy:** `FreqaiMultiFactorBtcV6Strategy.py` (12h) / `V7` (24h)
+**Results:**
+- 12h: 96 trades, −48.71%, win 63.5%, p=0.016
+- 24h: 96 trades, −33.92%, win 67.7%, p=0.139
+
+**Calibration (the decisive check — see `docs/research/calibration-evidence.md`):**
+- 12h corr(pred,actual) = −0.020 · 24h = +0.010 · (3h baseline = −0.017)
+- **Correlation ≈ 0 at every horizon.** Higher predictions never produce higher returns. Win rates were exit-structure artifacts.
+
+**Verdict: directional ML abandoned.** The model has no predictive edge at any horizon.
+
+---
+
+## V2.1 — Faithful SPEC_V2 implementation (rule-based trend-following)
+
+**Date:** 2026-08-25 · **Strategy:** `BtcTrendFollowingV21Strategy.py`
+**Config:** config_baseline.json · **Window:** 2024-09-01 → 2026-08-24 (2yr, +33% bull market)
+
+**Result A (structural exit only — `ohlcv` bug meant trailing never fired):**
+- 139 trades, **−2.83% net**, win 25.2% (35W/104L), PF **0.976**, p=**0.933**, DD 38.5%
+- Wins avg +3.30% (held 2d15h) vs losses avg −1.09% (held 14h) — 3.03:1 payoff, exactly the 3:1 a 25% win rate needs to break even.
+
+**Result B (1.5× ATR trailing actually firing):**
+- 406 trades, **−82.95%**, avg duration 2h27m — 1.5× ATR ≈ 0.5–0.7% is inside 1h noise → pure whipsaw. (Fees: 406 × 0.2% ≈ 81% ≈ the loss.)
+
+**⚠️ Correction (from cross-review):** the earlier "gross +25% edge consumed by 27.8% fees" claim was **wrong** — freqtrade already models fees in each trade's P&L, so PF 0.976 is the true gross: the entry is a coin-flip (p=0.93), not an edge being fee'd away. **There is no gross edge to rescue.** The 3.03:1 payoff with 25% win rate = precisely breakeven.
+
+**Verdict:** entry has no statistical edge. V2.2 (widen exit + drop trailing) would be the 3rd exit-tuning iteration polishing a zero-edge entry — **abandoned on cross-review.**
 
 ---
 
