@@ -147,19 +147,40 @@
 
   <section>
     <h2>4. Parameter Sensitivity & Robustness</h2>
-    <div class="admonition todo">
-      <div class="todo-header">Missing Data: Parameter Sensitivity Surface</div>
-      <p>Currently, the strategy uses fixed parameters (4h EMA200, 1h SMA200, 1h SMA20). We have not proven that these parameters are robust across a wider neighborhood.</p>
-      
-      <strong>Detailed Action Plan:</strong>
-      <ol>
-        <li>Configure Freqtrade <code>Hyperopt</code> strictly to evaluate parameter surfaces, NOT to optimize for the highest number.</li>
-        <li>Define a hyperopt space for the Regime Filter (e.g., test SMAs from 150 to 250).</li>
-        <li>Define a hyperopt space for the Pullback Entry (e.g., test SMAs from 10 to 40).</li>
-        <li>Generate a 3D Heatmap / Surface Plot.</li>
-        <li><strong>Acceptance Criteria:</strong> The strategy must remain profitable in at least 80% of the surrounding parameter neighborhood. If profitability collapses at SMA195 or SMA205, the strategy is curve-fitted and must be discarded.</li>
-      </ol>
+
+    <div class="admonition done">
+      <div class="done-header">Parameter Sensitivity Surface — PASS</div>
+      <p>Swept the full neighborhood from the action plan: <strong>regime/exit SMA 150–250 × pullback SMA 10–40</strong> (35 points, ADX fixed at 20), plus an <strong>ADX 15–25</strong> sweep at the default. Full 2-year window, 37 backtests. Green = higher return; blue outline = the deployed default (200/20).</p>
     </div>
+
+    <table style="border-collapse:collapse;">
+      <thead><tr>
+        <th style="padding:8px;border:1px solid #30363d;color:#8b949e;">trend SMA ↓ \ pullback →</th>
+        <th style="padding:8px;border:1px solid #30363d;color:#8b949e;">10</th>
+        <th style="padding:8px;border:1px solid #30363d;color:#8b949e;">15</th>
+        <th style="padding:8px;border:1px solid #30363d;color:#8b949e;">20</th>
+        <th style="padding:8px;border:1px solid #30363d;color:#8b949e;">25</th>
+        <th style="padding:8px;border:1px solid #30363d;color:#8b949e;">30</th>
+        <th style="padding:8px;border:1px solid #30363d;color:#8b949e;">35</th>
+        <th style="padding:8px;border:1px solid #30363d;color:#8b949e;">40</th>
+      </tr></thead>
+      <tbody>
+        <tr><td style="padding:8px;border:1px solid #30363d;color:#8b949e;font-weight:600;">150</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#165e39;color:#c9d1d9;">31.2%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#18673e;color:#c9d1d9;">34.5%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#1b7043;color:#c9d1d9;">38.3%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#135634;color:#c9d1d9;">28.1%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#145835;color:#c9d1d9;">28.8%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#0e4429;color:#c9d1d9;">20.6%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#0e4429;color:#c9d1d9;">20.6%</td></tr>
+        <tr><td style="padding:8px;border:1px solid #30363d;color:#8b949e;font-weight:600;">175</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#155c37;color:#c9d1d9;">30.3%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#1b6e42;color:#c9d1d9;">37.4%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#20814d;color:#c9d1d9;">45.0%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#18673e;color:#c9d1d9;">34.6%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#19683f;color:#c9d1d9;">35.3%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#155b36;color:#c9d1d9;">29.8%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#104b2d;color:#c9d1d9;">23.7%</td></tr>
+        <tr><td style="padding:8px;border:1px solid #30363d;color:#8b949e;font-weight:600;">200</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#238952;color:#c9d1d9;">48.2%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#28985b;color:#0d1117;">54.3%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#2daa66;color:#0d1117;outline:2px solid #58a6ff;outline-offset:-2px;">61.2%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#2eab67;color:#0d1117;">62.0%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#2daa66;color:#0d1117;">61.6%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#269358;color:#c9d1d9;">52.5%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#207f4c;color:#c9d1d9;">44.3%</td></tr>
+        <tr><td style="padding:8px;border:1px solid #30363d;color:#8b949e;font-weight:600;">225</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#31b56d;color:#0d1117;">65.9%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#3ddc84;color:#0d1117;">81.2%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#3bd781;color:#0d1117;">79.5%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#33bc71;color:#0d1117;">68.7%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#2eac67;color:#0d1117;">62.1%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#299e5e;color:#0d1117;">56.5%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#279459;color:#c9d1d9;">52.8%</td></tr>
+        <tr><td style="padding:8px;border:1px solid #30363d;color:#8b949e;font-weight:600;">250</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#2ead68;color:#0d1117;">62.8%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#39d17d;color:#0d1117;">76.9%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#3bd881;color:#0d1117;">79.8%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#33bd71;color:#0d1117;">68.9%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#2ead68;color:#0d1117;">62.8%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#2ca663;color:#0d1117;">59.9%</td><td style="padding:8px;border:1px solid #30363d;text-align:center;background:#2aa060;color:#0d1117;">57.3%</td></tr>
+      </tbody>
+    </table>
+
+    <p style="margin-top:16px;"><strong>Acceptance criterion:</strong> ≥80% of the neighborhood must stay profitable. <strong>Result: 37/37 (100%) profitable.</strong> The minimum return anywhere in the grid is +20.56% (trend 150, pullback 35), and the surface is a smooth plateau with no cliff-edge collapse.</p>
+
+    <p><strong>Readings:</strong></p>
+    <ul>
+      <li><strong>No curve-fitting detected.</strong> Returns decline gradually toward the grid edges, with no point collapsing to zero or negative — the signature of a structural edge, not a fitted one.</li>
+      <li><strong>ADX is the most sensitive parameter.</strong> ADX 20 → +61.25%, ADX 15 → +57.08%, but ADX 25 → +32.19%. The trend-strength gate is doing real work; tightening it halves the return.</li>
+      <li><strong>The default sits on a robust plateau, not a spike.</strong> The global maximum (~81% at trend 225–250, pullback 15–20) is adjacent to the deployed default (61.25% at 200/20). We deliberately <em>do not</em> re-optimize toward that peak: the difference is well within Monte Carlo sampling noise (bootstrap p5–p95 spanned −10% to +220%), and chasing it would be the overfitting this gate exists to prevent.</li>
+    </ul>
   </section>
 
   <section>
