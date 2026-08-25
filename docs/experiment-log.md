@@ -190,6 +190,39 @@
 
 ---
 
+## WFA-1Y-ML-002 — Wrapper Fixes (ATR trailing + horizon stop + SMA200 gate)
+
+**Date:** 2026-08-25
+**Strategy:** `FreqaiMultiFactorBtcV2Strategy.py` (model/features identical to ML-001; wrapper changed)
+**Config:** config.json + config_freqai_v2.json (`MultiFactorLightGBM-1Year-V2`), `--freqaimodel LightGBMRegressor`
+**Data:** BTC/USDT 1h+4h, **2025-08-26 → 2026-08-24** (same 1-year window as ML-001)
+**Changes vs ML-001:**
+1. `minimal_roi` disabled → ATR trailing stop (2× ATR below max_rate, −5% backstop)
+2. `custom_exit` horizon stop: exit after 6h if profit < 1%
+3. Entry gate: `close > SMA200` (bull regime filter)
+
+**Results:**
+- **3 trades only** (vs 39 in ML-001) — SMA200 gate over-filtered in the −26.9% market
+- +7.5% total, 66.7% win (2W/1L), avg profit/trade **+2.52%** (vs −0.70% ML-001)
+- Max DD **0.45%** (2 days) vs 32.7% (228 days) in ML-001
+- Sharpe 1.07, Calmar 7.6, p=0.41
+
+**Trade-level (3 trades):**
+- 2026-04-13 → 04-13, horizon_stop, −0.46% (dead signal cut fast ✓)
+- 2026-04-13 → 04-21, exit_signal, **+7.43%** (8-day runner — ATR trailing let it run; ML-001 would've ROI-capped at ~+1.5%)
+- 2026-07-20 → 07-20, horizon_stop, +0.60%
+
+**Diagnosis (decomposition):**
+- Fixes 1+2 WORK: winner ran to +7.43%, dead signals cut at 6h, DD collapsed 32.7% → 0.45%
+- Fix 3 (SMA200) FAILED as designed: 39 → 3 trades, killed the profitable bear-bounce trades (Apr/Jul were ML-001's best months, all below SMA200)
+- 3 trades = statistically meaningless → iterate to ML-003
+
+**Verdict:** Keep Fixes 1+2, drop Fix 3. ML-003 = exit fixes only.
+
+**Artifact:** `user_data/backtest_results/backtest-result-2026-08-25_06-16-46.zip`
+
+---
+
 ## Future Experiments
 
 Format for new entries:

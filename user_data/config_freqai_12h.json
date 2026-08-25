@@ -6,7 +6,7 @@
     "backtest_period_days": 7,
     "live_retrain_hours": 24,
     "expiration_hours": 48,
-    "identifier": "MultiFactorLightGBM-V3",
+    "identifier": "MultiFactorLightGBM-12H",
     "feature_parameters": {
       "include_timeframes": [
         "1h",

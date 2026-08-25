@@ -68,7 +68,7 @@
     "username": "freqtrader",
     "password": "freqtrader"
   },
-  "bot_name": "MultiFactorBtcBot",
+  "bot_name": "BtcTrendBot",
   "initial_state": "running",
   "force_entry_enable": false,
   "internals": {
@@ -77,5 +77,6 @@
   "strategy": "BtcEmaCrossoverStrategy",
   "strategy_path": "/freqtrade/user_data/strategies/",
   "datadir": "/freqtrade/user_data/data/binance",
-  "user_data_dir": "/freqtrade/user_data"
+  "user_data_dir": "/freqtrade/user_data",
+  "stoploss": -0.99
 }
