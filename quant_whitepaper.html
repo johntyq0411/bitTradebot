@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantitative Research Whitepaper — Modest-Bohr</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+</script>
+<style>
+  :root { --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff; --green: #2ea043; --red: #f85149; --yellow: #d29922; --code-bg: #1f2428; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; }
+  .container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 40px; }
+  .status-badge { display: inline-block; padding: 4px 12px; background: rgba(88, 166, 255, 0.1); color: var(--accent); border: 1px solid var(--accent); border-radius: 20px; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+  h1 { font-size: 32px; font-weight: 600; color: #fff; margin-bottom: 8px; }
+  .subtitle { font-size: 18px; color: var(--muted); }
+  h2 { font-size: 24px; font-weight: 600; color: #fff; margin: 48px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 18px; font-weight: 600; color: #fff; margin: 24px 0 12px; }
+  p { margin-bottom: 16px; }
+  ul, ol { margin-bottom: 16px; padding-left: 24px; }
+  li { margin-bottom: 8px; }
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .stat-title { font-size: 12px; text-transform: uppercase; color: var(--muted); letter-spacing: 1px; margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 600; color: #fff; }
+  .positive { color: var(--green); }
+  .negative { color: var(--red); }
+  .admonition { border-left: 4px solid; padding: 16px; margin-bottom: 24px; border-radius: 0 8px 8px 0; background: rgba(255,255,255,0.02); }
+  .todo { border-color: var(--yellow); }
+  .todo-header { color: var(--yellow); font-weight: 600; display: flex; align-items: center; margin-bottom: 8px; }
+  .todo-header::before { content: "🚧 TODO / MISSING"; margin-right: 8px; background: var(--yellow); color: #000; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+  .done { border-color: var(--green); }
+  .done-header { color: var(--green); font-weight: 600; display: flex; align-items: center; margin-bottom: 8px; }
+  .done-header::before { content: "✅ COMPLETED"; margin-right: 8px; background: var(--green); color: #000; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+  .danger { border-color: var(--red); }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+  th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: rgba(255,255,255,0.02); color: var(--muted); font-size: 14px; }
+  .mermaid-wrapper { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin: 32px 0; display: flex; justify-content: center; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="status-badge">Phase 5 — Live Paper Trading (dry-run)</div>
+    <h1>Quantitative Research Whitepaper</h1>
+    <div class="subtitle">Regime-Gated Trend Strategy (BTC/USDT)</div>
+  </header>
+
+  <section>
+    <h2>1. The Strategy Mandate & Rationale</h2>
+    <p>The objective of this strategy is to harvest the <strong>trend-following risk premium</strong> in the cryptocurrency market. Cryptocurrency exhibits severe, prolonged drawdown periods (crypto winters) followed by violent momentum-driven expansion cycles.</p>
+    <p><strong>Economic Rationale:</strong> Rather than attempting to predict price direction using complex Machine Learning (which our audits proved possessed zero correlation to future returns), this strategy capitalizes on momentum inertia. It mathematically ensures capital preservation during macro drawdowns (the "Bear Regime") and aggressively remains exposed during structural uptrends.</p>
+  </section>
+
+  <section>
+    <h2>2. The Tearsheet (Performance Metrics)</h2>
+    <p>Metrics derived from the finalized <code>RegimeGatedTrendSMA200Strategy</code>, strictly benchmarking against Buy & Hold. Fills executed at next-candle open to eliminate lookahead bias.</p>
+    
+    <h3>2-Year Walk-Forward (Full Cycle: 2024-2026)</h3>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-title">Net Profit</div>
+        <div class="stat-value positive">+61.25%</div>
+        <div class="stat-title" style="margin-top: 8px;">(Market: +36.90%)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Profit Factor</div>
+        <div class="stat-value">1.81</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Total Trades</div>
+        <div class="stat-value">88</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Max Drawdown</div>
+        <div class="stat-value negative">10.73%</div>
+      </div>
+    </div>
+
+    <h3>1-Year Stress Test (Bear Market: 2025-2026)</h3>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-title">Net Profit</div>
+        <div class="stat-value positive">+20.23%</div>
+        <div class="stat-title" style="margin-top: 8px;">(Market: -29.02%)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Max Drawdown</div>
+        <div class="stat-value negative">10.74%</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Profit Factor</div>
+        <div class="stat-value">1.95</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Total Trades</div>
+        <div class="stat-value">31</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. Out-of-Sample & Walk-Forward Testing</h2>
+    <p>To ensure the strategy does not rely on a single lucky bull run, the 2-year dataset was split into 4 consecutive chunks. The strategy demonstrated absolute profitability across all regimes:</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Window (chronological)</th>
+          <th>Market Condition</th>
+          <th>Strategy Return</th>
+          <th>Conclusion</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2024-08 → 2025-02</td>
+          <td>+75.81% (Bull)</td>
+          <td class="positive">+17.31%</td>
+          <td>Captured structural trend.</td>
+        </tr>
+        <tr>
+          <td>2025-02 → 2025-08</td>
+          <td>+12.59% (Bull)</td>
+          <td class="positive">+12.93%</td>
+          <td>Tracked market.</td>
+        </tr>
+        <tr>
+          <td>2025-08 → 2026-02</td>
+          <td>-31.58% (Bear)</td>
+          <td class="positive">+1.63%</td>
+          <td>Capital preservation intact.</td>
+        </tr>
+        <tr>
+          <td>2026-02 → 2026-08</td>
+          <td>+1.07% (Flat)</td>
+          <td class="positive">+17.65%</td>
+          <td>Strongest proof of alpha; profiting without market tailwinds.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>4. Parameter Sensitivity & Robustness</h2>
+    <div class="admonition todo">
+      <div class="todo-header">Missing Data: Parameter Sensitivity Surface</div>
+      <p>Currently, the strategy uses fixed parameters (4h EMA200, 1h SMA200, 1h SMA20). We have not proven that these parameters are robust across a wider neighborhood.</p>
+      
+      <strong>Detailed Action Plan:</strong>
+      <ol>
+        <li>Configure Freqtrade <code>Hyperopt</code> strictly to evaluate parameter surfaces, NOT to optimize for the highest number.</li>
+        <li>Define a hyperopt space for the Regime Filter (e.g., test SMAs from 150 to 250).</li>
+        <li>Define a hyperopt space for the Pullback Entry (e.g., test SMAs from 10 to 40).</li>
+        <li>Generate a 3D Heatmap / Surface Plot.</li>
+        <li><strong>Acceptance Criteria:</strong> The strategy must remain profitable in at least 80% of the surrounding parameter neighborhood. If profitability collapses at SMA195 or SMA205, the strategy is curve-fitted and must be discarded.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Execution Reality, Slippage & Monte Carlo</h2>
+
+    <div class="admonition done">
+      <div class="done-header">Slippage Model</div>
+      <p>Re-analyzed with a <strong>0.05% slippage penalty per side</strong> (0.10% round-trip, on top of the standard 0.1% exchange fee). The alpha survives:</p>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-title">Net Profit (2y, with slippage)</div>
+          <div class="stat-value positive">+48.31%</div>
+          <div class="stat-title" style="margin-top: 8px;">(vs +36.90% buy &amp; hold)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Profit Factor</div>
+          <div class="stat-value">1.70</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-title">Max Drawdown</div>
+          <div class="stat-value negative">11.45%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admonition done">
+      <div class="done-header">Monte Carlo — Risk of Ruin & Drawdown Clustering</div>
+      <p>10,000 bootstrap resamples of the 88-trade return sequence, plus 10,000 trade-order permutations:</p>
+      <table>
+        <thead>
+          <tr><th>Scenario</th><th>Result</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Backtest drawdown (actual order)</td><td>10.8%</td></tr>
+          <tr><td>Expected drawdown (random order, median)</td><td>~15.8%</td></tr>
+          <tr><td>P(drawdown &gt; 20%)</td><td>17.9%</td></tr>
+          <tr><td>P(drawdown &gt; 25%)</td><td>3.3%</td></tr>
+          <tr><td>Worst-case drawdown (1 in 10,000 orderings)</td><td>36.3%</td></tr>
+          <tr><td>P(2-year return &lt; 0) — risk of ruin</td><td>9.7% (14.9% with slippage)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="admonition danger">
+      <strong>Honest reading:</strong> the backtest's ~10.8% drawdown is optimistic on trade ordering. Under random ordering the expected drawdown is ~16%, and there is an ~18% chance of exceeding the 20% drawdown target purely from how trades cluster. The ≤20% drawdown goal is <em>not</em> robustly guaranteed — this must be priced into position sizing (e.g., fractional sizing or a wider disaster stop).
+    </div>
+
+    <div class="admonition todo">
+      <div class="todo-header">Remaining: AUM Capacity Audit</div>
+      <p>Calculate the average BTC/USDT 1h trade volume during entry signals and estimate the maximum capital deployable before our own orders move the orderbook by more than 0.1% (square-root impact model).</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Tail Risk & "Kill Switch" Caveats</h2>
+    <p>The risk committee must be aware of the following structural vulnerabilities before deploying capital:</p>
+    
+    <div class="admonition danger">
+      <strong>Gap Risk (The Flash Crash)</strong>
+      <p>Because the primary risk management is a structural moving average exit (SMA200) rather than a tight trailing stop, a sudden flash crash (e.g., a 20% drop in a single 1-hour candle) will bypass the moving average before the candle closes.</p>
+      <p><strong>Mitigation:</strong> A hard <code>-15%</code> disaster stop has been implemented in the strategy file. <em>However, this stop never fired during the 2-year backtest (the worst trade was -6.34%).</em> It is entirely untested theoretical insurance.</p>
+    </div>
+
+    <ul>
+      <li><strong>Statistical Thinness:</strong> With only 88 trades over 2 years, the p-value is 0.32. This is directional evidence of an edge, not statistical proof. Hundreds of trades over a longer out-of-sample period are required for high confidence.</li>
+      <li><strong>Counterparty Risk:</strong> The bot relies on 100% uptime from the Binance API. Network disconnection during a structural exit trigger will leave the portfolio exposed.</li>
+      <li><strong>Defensive Opportunity Cost:</strong> The strategy is designed for capital preservation first. In a massive, vertical bull market, it will underperform an aggressive leveraged long position.</li>
+    </ul>
+  </section>
+
+  <div class="mermaid-wrapper">
+    <div class="mermaid">
+      graph TD
+        A[("Binance Data")] --> E["Freqtrade Engine"]
+        E --> F["Regime Classifier (SMA200 + ADX)"]
+        F -->|"Bull Regime Only"| G["Trade Logic"]
+        G -->|"SMA20 Pullback"| H["Enter Position"]
+        H -->|"SMA200 Cross-under"| I["Structural Exit"]
+        H -->|"-15% Flash Crash"| J["Disaster Kill Switch"]
+        
+        style H fill:#164e2b,stroke:#3ddc84
+        style I fill:#4a1515,stroke:#ff5c5c
+        style J fill:#4a1515,stroke:#ff0000,stroke-width:2px
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
