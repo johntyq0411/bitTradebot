@@ -93,6 +93,103 @@
 
 ---
 
+## V2-005 — Trend-Following V2 Initial Backtest
+
+**Date:** 2026-08-24  
+**Strategy:** `BtcTrendFollowingV2Strategy.py` (V2.0)  
+**Config:** config_baseline.json  
+**Data:** BTC/USDT 1h, Aug 2024 – Aug 2026 (full 2-year)  
+**Timerange:** 2024-09-03 → 2026-08-22 (startup excluded)  
+
+**Parameters:**
+- Timeframe: 1h
+- Regime: BULL only (SMA200 slope > 0, price > SMA200, ADX > 20)
+- Entry: Trend signal score >= 4/6, regime confirmed >= 10 candles
+- Exit: Structural (close below SMA50), ATR trailing (1.5× ATR), time stop (48 candles at loss)
+- No fixed ROI target
+- Max open trades: 1
+- Stoploss: -0.99 (emergency only)
+
+**Results:**
+| Metric | Value |
+|---|---|
+| Trades | 66 |
+| Total P/L | **+12.23 USDT (+1.22%)** |
+| Win rate | 39.4% (26 wins, 40 losses, 0 draws) |
+| Avg trade duration | 1d 20:58 |
+| Avg winner duration | 2d 16:48 |
+| Avg loser duration | 1d 08:04 |
+| Max consecutive wins | 5 |
+| Max consecutive losses | 6 |
+| **Max drawdown** | **28.02% (349 USDT)** ⚠️ EXCEEDS 20% limit |
+| Sharpe (daily wallet) | 0.13 ⚠️ Very low |
+| Sortino | 0.11 |
+| Calmar | 0.12 |
+| Min balance | 891.62 USDT |
+| Max balance | 1279.26 USDT |
+| Drawdown duration | 599 days (out of ~700 days backtested) |
+| Days win/draw/lose | 25 / 644 / 38 |
+
+**Observations:**
+- **FAILED.** Does not meet any success criteria:
+  1. Only 1.22% profit over 2 years — barely above noise, likely below costs
+  2. 28% drawdown — exceeds 20% acceptable limit
+  3. 39.4% win rate — losing trades outnumber wins 1.5:1
+  4. Sharpe 0.13 — essentially random performance
+  5. Drawdown lasted 599 days — strategy was underwater almost the entire period
+- 66 trades over 2 years = ~3 trades/month — reasonable frequency but poor quality
+- The strategy enters too often (any marginal trend signal triggers entry) but exits too slowly (structural exit only triggers on SMA50 cross, which lags significantly)
+- ATR trailing stop (1.5×) is too tight — gets stopped out by normal price fluctuation before trend develops
+- Bull regime filter works (only trades in bull) but the bull periods themselves don't produce reliable trend signals
+
+**Diagnosis — Why it failed:**
+1. **Entry too loose:** Trend signal score >= 4/6 is too easy to achieve. Many false entries during weak trends.
+2. **Exit too slow:** Structural exit (SMA50 cross) lags significantly. By the time price crosses below SMA50, most of the drawdown has already happened.
+3. **Trailing stop too tight:** 1.5× ATR gets hit by normal volatility before the trend has room to develop.
+4. **No profit target:** Letting winners run is good in theory, but without a take-profit mechanism, winners get given back.
+
+**What to try next (V2.1):**
+- Tighten entry: require trend signal score >= 5/6, or add volume confirmation requirement
+- Faster structural exit: use SMA20 or EMA20 instead of SMA50 for exit trigger
+- Wider trailing stop: 2.5-3× ATR instead of 1.5×, or use percentage-based trailing
+- Add profit target: take partial profits at 3-5% gain, let remainder run
+- Consider only entering on *new* trend starts (price crossing above SMA200), not just being above it
+
+**Verdict:** V2.0 rejected. Proceed to V2.1 with tightened entry, faster exit, and wider stops.
+
+**Artifact:** Backtest result in `user_data/backtest_results/` (timestamped export)
+
+---
+
+## WFA-1Y-ML-001 — FreqAI ML 1-Year Walk-Forward (First Full-Data OOS)
+
+**Date:** 2026-08-25
+**Strategy:** `FreqaiMultiFactorBtcStrategy.py` (unchanged)
+**Config:** config.json + config_freqai.json, `--freqaimodel LightGBMRegressor`
+**Data:** BTC/USDT 1h+4h, **2025-08-26 → 2026-08-24** (1 year, full 4h coverage — 4h data was backfilled to 2yr first)
+**Setup:** FreqAI rolling 30d train / 7d test windows (~52 folds), each test window out-of-sample
+
+**Results:**
+- 39 trades, **-25.41%** (-254 USDT), win rate 64.1% (25W/14L)
+- Profit factor 0.57, expectancy -6.51 USDT/trade, Sharpe -0.47, p=0.164
+- Max DD 32.7% (342 USDT), DD duration 228 days
+- **Market change over period: -27.9%** (bear regime) — strategy beat buy-and-hold by ~2.5pts
+
+**Exit reasons:** 24 roi, 13 stop_loss, 2 exit_signal
+**Win/loss asymmetry:** avg win +1.61% (ROI-capped) vs avg loss -4.84% (full stop) — 64% win rate cannot overcome 1.6:4.8 payoff ratio
+**Monthly:** +6.0% Apr, +4.5% Jul, +1.5% Sep/May; crushed -17.8% Jun, -10.4% Feb, -6.7% Nov
+
+**Diagnosis (3 structural problems, not model failure):**
+1. Long-only in a -27.9% bear market — no cash filter; strategy still beat buy-and-hold
+2. `minimal_roi` (5%/3%/1.5% tiers) caps winners while stop_loss (-5%) runs full — payoff structure destroys a real 64% signal
+3. Horizon mismatch: model predicts 3 candles ahead but avg holding is 1d 9h — signal decays ~10× before exit
+
+**Verdict:** ML signal confirmed real (64.1% win vs ~50% random) but wrapper is broken. Iterate to WFA-1Y-ML-002 with: (a) ROI rework → ATR trailing, (b) horizon-aligned exits (3-6h or signal reversal), (c) bear/cash filter when model down-probability high.
+
+**Artifact:** `user_data/backtest_results/backtest-result-2026-08-25_03-03-06.zip`
+
+---
+
 ## Future Experiments
 
 Format for new entries:
@@ -112,4 +209,4 @@ Format for new entries:
 
 ---
 
-*Last updated: 2026-08-24*
+*Last updated: 2026-08-25*
