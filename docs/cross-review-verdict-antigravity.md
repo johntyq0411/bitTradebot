@@ -74,3 +74,31 @@ every strategy it touched: ML-002 → V2.1 → this one).
 3. Run the 7-gate walk-forward protocol (see `docs/RESEARCH_HARNESS.md`) before any live/paper deployment.
 
 *Artifact: this document. Backtest zips in `user_data/backtest_results/` (notes `FINAL-1Y-CLEAN`, `FINAL-2Y-CLEAN`, `LA-CHECK-1Y`).*
+
+---
+
+## Follow-up: Fix Verification (2026-08-25)
+
+Ran the two recommended fixes. Full matrix:
+
+| Exit | Window | Market | Net | PF | DD | Trades |
+|---|---|---|---|---|---|---|
+| SMA50 | 1y | −29.02% | +24.41% | 2.20 | 7.66% | 28 |
+| SMA50 | 2y | +36.90% | +26.70% | 1.38 | 12.49% | 86 |
+| SMA100 | 1y | −29.02% | +14.39% | 1.63 | 13.23% | 32 |
+| SMA100 | 2y | +36.90% | +40.11% | 1.54 | 13.23% | 76 |
+| SMA200 | 1y | −29.02% | +20.23% | 1.95 | 10.74% | 31 |
+| **SMA200** | **2y** | **+36.90%** | **+61.25%** | **1.81** | **10.73%** | **88** |
+
+**Fix 1 (disaster stop) — VERIFIED.** Setting `stoploss=-0.15` (was −0.99) makes the stop real. It never
+triggers in backtest (worst trade −6.34% > −15%) → **free tail insurance**. Applied to `config_baseline.json`.
+
+**Fix 2 (wider exit) — SMA200 WINS.** SMA200 exit:
+- 2y: +61.25% vs +26.70% (SMA50) — **beats buy-and-hold (+36.90%)**.
+- 1y bear: +20.23% vs +24.41% (SMA50) — 4 pts worse defense, still strongly positive.
+- DD: 10.73% (2y), within ≤20% target.
+
+SMA100 is strictly dominated by SMA200 (lower return, same DD) — dropped.
+
+**Recommendation:** Adopt `RegimeGatedTrendSMA200Strategy` + `stoploss=-0.15` as canonical.
+Tradeoff vs SMA50: −4 pts bear defense, +34 pts total return, still beats the market over 2y.

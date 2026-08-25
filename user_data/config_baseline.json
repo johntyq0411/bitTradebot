@@ -78,5 +78,5 @@
   "strategy_path": "/freqtrade/user_data/strategies/",
   "datadir": "/freqtrade/user_data/data/binance",
   "user_data_dir": "/freqtrade/user_data",
-  "stoploss": -0.99
+  "stoploss": -0.15
 }

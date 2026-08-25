@@ -319,6 +319,22 @@ Full verdict: `docs/cross-review-verdict-antigravity.md`
 
 ---
 
+## Fix Verification — Wider Exit + Disaster Stop (2026-08-25)
+
+| Exit | 1y (mkt −29.02%) | 2y (mkt +36.90%) |
+|---|---|---|
+| SMA50 | +24.41% (DD 7.66%) | +26.70% (DD 12.49%) |
+| SMA100 | +14.39% | +40.11% (dominated — dropped) |
+| **SMA200** | +20.23% (DD 10.74%) | **+61.25% (DD 10.73%)** |
+
+- **Disaster stop fixed:** config `stoploss` −0.99 → −0.15 (was silently disabling all stops). Never triggers in backtest (worst trade −6.34% > −15%) → free tail insurance.
+- **SMA200 exit wins:** beats buy-and-hold over 2y (+61.25% vs +36.90%), retains positive bear defense.
+- **Adopt** `RegimeGatedTrendSMA200Strategy` as canonical.
+
+See `docs/cross-review-verdict-antigravity.md` § "Fix Verification".
+
+---
+
 ## Future Experiments
 
 Format for new entries:
