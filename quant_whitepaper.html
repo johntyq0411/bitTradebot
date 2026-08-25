@@ -228,9 +228,19 @@
       <strong>Honest reading:</strong> the backtest's ~10.8% drawdown is optimistic on trade ordering. Under random ordering the expected drawdown is ~16%, and there is an ~18% chance of exceeding the 20% drawdown target purely from how trades cluster. The ≤20% drawdown goal is <em>not</em> robustly guaranteed — this must be priced into position sizing (e.g., fractional sizing or a wider disaster stop).
     </div>
 
-    <div class="admonition todo">
-      <div class="todo-header">Remaining: AUM Capacity Audit</div>
-      <p>Calculate the average BTC/USDT 1h trade volume during entry signals and estimate the maximum capital deployable before our own orders move the orderbook by more than 0.1% (square-root impact model).</p>
+    <div class="admonition done">
+      <div class="done-header">AUM Capacity Audit</div>
+      <p><strong>Venue liquidity (binanceus, 1h BTC/USDT):</strong> median hourly volume <strong>$3.4M</strong> but mean $32.6M — heavily spike-dominated, with 50% of hours below $1M. Square-root impact model (<code>impact = κ·σ·√(Q/V)</code>, σ = 2.32% daily):</p>
+      <table>
+        <thead><tr><th>Volume reference</th><th>Capacity @ 0.1% impact (κ=0.1 / 0.3 / 1.0)</th></tr></thead>
+        <tbody>
+          <tr><td>ADV (naive, spike-inflated)</td><td>$145.5M / $16.2M / $1.5M</td></tr>
+          <tr><td>Median daily volume</td><td>$27.8M / $3.1M / $278k</td></tr>
+          <tr><td><strong>Median hourly (realistic)</strong></td><td><strong>$631k / $70k / $6k</strong></td></tr>
+        </tbody>
+      </table>
+      <p><strong>Entry-time liquidity:</strong> the strategy's pullback entries land in the thinnest hours — median $0.11M/hour vs $3.4M market median (<strong>0.03×</strong>).</p>
+      <p><strong>Verdict:</strong> realistic deployable capital is <strong>~$100k–$1M</strong>, not the tens of millions naive ADV math implies. Two mitigations: (1) entries/exits are passive <em>limit</em> orders, so real impact sits below the model bound; (2) the only market order is the −15% disaster stop, which fired 0 times. <strong>Scaling beyond ~$1M requires migrating to a deeper venue</strong> (global Binance is ~10–100× more liquid).</p>
     </div>
   </section>
 
