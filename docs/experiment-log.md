@@ -335,6 +335,31 @@ See `docs/cross-review-verdict-antigravity.md` § "Fix Verification".
 
 ---
 
+## 7-Gate Validation — RegimeGatedTrendSMA200Strategy (2026-08-25)
+
+- **Gate 1 (data):** 1h 17,548 candles (2024-08-24→2026-08-25), 4h 4,525 (2024-08-01→2026-08-25) — full 2y coverage. Macro N/A (price-based regime only).
+- **Gate 2 (config):** `binanceus` authoritative (datadir key ignored — known quirk). ✓
+- **Gate 3 (smoke):** 5-day run clean, 1 trade, no errors. ✓
+- **Gate 4 (calibration):** N/A (rule-based).
+- **Gate 5 (full):** 2y +61.25%, PF 1.81, DD 10.73%, 88 trades. ✓
+- **Gate 6 (exit audit):** exit_signal 78 · time_stop 9 · force_exit 1 · **stop_loss 0** (disaster stop −0.15 active, never fires). Mechanisms verified, no silent failure. ✓
+- **Gate 7 (immutability):** SHA pinned at commit of this entry.
+
+**Walk-forward (4 × ~6mo):**
+
+| Window | Market | Net | PF | Trades |
+|---|---|---|---|---|
+| 2024-08→2025-02 | +75.81% | +17.31% | 1.59 | 26 |
+| 2025-02→2025-08 | +12.59% | +12.93% | 1.90 | 26 |
+| 2025-08→2026-02 | −31.58% | +1.63% | 1.21 | 14 |
+| 2026-02→2026-08 | +1.07% | +17.65% | 2.16 | 23 |
+
+**All 4 windows positive.** Bear survival: +1.63% vs −31.58% market. Alpha signal: +17.65% in a +1.07% flat market. No negative regime. **PASS.**
+
+**Action:** switched config `strategy` → `RegimeGatedTrendSMA200Strategy` (was stale `BtcEmaCrossoverStrategy`).
+
+---
+
 ## Future Experiments
 
 Format for new entries:

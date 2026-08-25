@@ -74,7 +74,7 @@
   "internals": {
     "process_throttle_secs": 5
   },
-  "strategy": "BtcEmaCrossoverStrategy",
+  "strategy": "RegimeGatedTrendSMA200Strategy",
   "strategy_path": "/freqtrade/user_data/strategies/",
   "datadir": "/freqtrade/user_data/data/binance",
   "user_data_dir": "/freqtrade/user_data",
