@@ -300,6 +300,25 @@
 
 ---
 
+## Cross-Review Verdict — Antigravity RegimeGatedTrendStrategy (2026-08-25)
+
+Verified Antigravity's final strategy independently. **Real and best result to date.**
+
+- 1y bear (mkt −29.02%): **+24.41%**, PF 2.20, DD 7.66%, 28 trades
+- 2y full (mkt +36.90%): **+26.70%**, PF 1.38, 86 trades
+- Lookahead check (`price_side="other"`): identical result → NOT lookahead-driven.
+
+**Corrections to Antigravity's diagnosis:**
+1. ATR trailing stop was the poison, not the victim — removal (already in final file) is the fix, not loosening. With trailing: 1y +6.09% / 2y +1.44%. Without: +24.41% / +26.70%.
+2. The "+24.41% defense" was the *no-trailing* version, not the ATR stop.
+3. **No stop loss is active:** config `stoploss=-0.99` overrides strategy `-0.15`. Defense = SMA50 exit + time stop only.
+
+**Caveats:** not statistically significant (p=0.3176, 28 trades); no stop-loss → gap tail risk (worst −5.07%).
+
+Full verdict: `docs/cross-review-verdict-antigravity.md`
+
+---
+
 ## Future Experiments
 
 Format for new entries:
