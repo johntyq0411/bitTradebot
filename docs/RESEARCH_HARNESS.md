@@ -97,7 +97,20 @@ Pull the backtest zip and print the exit_reason distribution. **If a mechanism y
 
 ---
 
-## 4. What changes in V2.2 (and all future work)
+## 5. Recommended skills (load these, they encode lessons we paid for)
+
+| Skill | What it contributes to the harness | Where it would have saved us |
+|---|---|---|
+| **`systematic-debugging`** | *Iron Law* (no fixes without root cause), *Rule of Three* (≥3 failed fixes → question the architecture, don't iterate again) | ML-002→003→004→005 was 4 wrapper iterations on a dead model. The Rule of Three says we should have stopped at 003 and questioned the *model*, not the wrapper. Its Phase-1 "build a tight feedback loop" = Gate 3 + Gate 6. |
+| **`spike`** | Throwaway experiment to falsify before build; **INVALIDATED is a successful spike** | The calibration check (corr ≈ 0) was a *successful spike* that killed the ML idea for ~free — we should have run it as the FIRST spike, before 7 backtests. Gate 4 IS a spike. Its "order by risk, most-likely-to-kill first" is the whole point. |
+| **`sdlc-review`** | **Vary review lenses per round** (Artifact / Execution / Contract) — identical briefs produce correlated verdicts and duplicate findings | Our 3-reviewer dispatch used decorrelated roles (auditor/critic/alternatives), which is right — but this skill formalizes it: always give parallel reviewers *different* lenses, not the same brief. Also: reviewer must NOT edit the implementation. |
+| **`test-driven-development`** | Write the falsification test *before* the build | Gate 4 calibration check and Gate 6 exit-reason audit are both "tests first". A strategy is "RED" until calibration is positive and the exit-reason audit shows the expected mechanism firing. |
+
+**Rule of thumb:** Gate 4 = `spike` (falsify cheap). Gate 6 = `systematic-debugging` (verify what actually ran). Cross-review = `sdlc-review` (decorrelated lenses). Any "should I tweak and re-run?" after 3 failed iterations = `systematic-debugging` Rule of Three → question the architecture, not the parameters.
+
+---
+
+## 6. What changes in V2.2 (and all future work)
 
 1. Gates 1–7 run before/after every experiment; exit-reason audit is mandatory.
 2. Every experiment-log entry carries `git SHA` + config identifier + data coverage.
